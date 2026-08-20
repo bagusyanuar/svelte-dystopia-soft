@@ -32,7 +32,8 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"svelte": "./dist/index.js"
-		}
+		},
+		"./index.css": "./dist/index.css"
 	},
 	"peerDependencies": {
 		"svelte": "^5.0.0"
@@ -77,5 +78,10 @@
 	},
 	"keywords": [
 		"svelte"
-	]
+	],
+	"dependencies": {
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^3.6.0"
+	}
 }

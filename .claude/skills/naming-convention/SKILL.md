@@ -9,8 +9,9 @@ description: File and folder naming convention for this library (kebab-case fold
 
 - **Folders**: always `kebab-case`. Example: `src/lib/components/date-picker/`, `src/lib/utils/`.
 - **Component files** (`.svelte`, and any `.svelte.ts` that defines/backs a component): `PascalCase`. Example: `Button.svelte`, `DatePicker.svelte`.
-- **Files colocated with a component** (types, spec, story) inherit the component's PascalCase name — don't convert them to kebab-case, since they're identified by which component they belong to, not by general file-naming rules:
+- **Files colocated with a component** (types, variants, spec, story) inherit the component's PascalCase name — don't convert them to kebab-case, since they're identified by which component they belong to, not by general file-naming rules:
   - `Button.types.ts`
+  - `Button.variants.ts` (only if the component has `cva` variants — see [component-variants](../component-variants/SKILL.md))
   - `Button.svelte.spec.ts`
   - `Button.stories.svelte`
 - **Everything else** (utils, helpers, non-component `.ts` files, plain `.spec.ts` for non-component logic): `kebab-case`. Example: `format-date.ts`, `format-date.spec.ts`.
@@ -26,6 +27,7 @@ src/lib/
     button/
       Button.svelte
       Button.types.ts
+      Button.variants.ts
       Button.svelte.spec.ts
       Button.stories.svelte
     date-picker/
@@ -34,6 +36,7 @@ src/lib/
       DatePicker.svelte.spec.ts
       DatePicker.stories.svelte
   utils/
+    cn.ts
     format-date.ts
     format-date.spec.ts
   types/
@@ -45,16 +48,17 @@ Storybook's `stories` glob in [.storybook/main.ts](../../../.storybook/main.ts) 
 
 ## Quick reference
 
-| What | Case | Example |
-|---|---|---|
-| Folder | kebab-case | `date-picker/` |
-| Component file | PascalCase | `DatePicker.svelte` |
-| Component `Props` type file | PascalCase (matches component) | `DatePicker.types.ts` |
-| Component spec | PascalCase (matches component) | `DatePicker.svelte.spec.ts` |
-| Component story | PascalCase (matches component) | `DatePicker.stories.svelte` |
-| Util / helper file | kebab-case | `format-date.ts` |
-| Shared/cross-component type file | kebab-case | `size.ts` |
-| Barrel file | lowercase | `index.ts` |
+| What                             | Case                           | Example                     |
+| -------------------------------- | ------------------------------ | --------------------------- |
+| Folder                           | kebab-case                     | `date-picker/`              |
+| Component file                   | PascalCase                     | `DatePicker.svelte`         |
+| Component `Props` type file      | PascalCase (matches component) | `DatePicker.types.ts`       |
+| Component `cva` variants file    | PascalCase (matches component) | `Button.variants.ts`        |
+| Component spec                   | PascalCase (matches component) | `DatePicker.svelte.spec.ts` |
+| Component story                  | PascalCase (matches component) | `DatePicker.stories.svelte` |
+| Util / helper file               | kebab-case                     | `format-date.ts`            |
+| Shared/cross-component type file | kebab-case                     | `size.ts`                   |
+| Barrel file                      | lowercase                      | `index.ts`                  |
 
 ## What to avoid
 

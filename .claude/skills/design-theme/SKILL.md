@@ -66,4 +66,4 @@ Tokens should be defined via Tailwind v4 `@theme` (see [tailwind-v4 skill](../ta
 
 ## Open decision
 
-Brand accent color is not finalized (see Color section above). When the user provides a real brand color, update the `--color-accent-*` stops in the shared theme CSS in one place and this rule stops being a placeholder.
+Brand accent color is not finalized (see Color section above). When the user provides a real brand color, update the `--color-accent-*` stops in [src/lib/index.css](../../../src/lib/index.css) — the single shared theme source, also shipped to consumers, see [tailwind-v4](../tailwind-v4/SKILL.md) — and this rule stops being a placeholder.

@@ -69,6 +69,15 @@ This matters more here than in a typical app — `Props` types are part of the p
 - Keep components headless-friendly where reasonable: accept a `class` prop and merge it with internal classes (e.g. via `clsx`/`tailwind-merge` if added as a dependency) so consumers can override styling without fighting specificity.
 - Avoid `$effect` for anything that runs once on mount only to set initial state that could instead be computed inline or via `$derived`.
 
+## Avoid library-specific AI slop
+
+Beyond general code hygiene (already default behavior — no unneeded comments, no premature abstraction), these are slop patterns specific to building a component library that are easy for an AI to fall into:
+
+- **Prop explosion**: don't add variant/size/color/behavior options that weren't asked for "just in case a consumer wants it." Ship what's needed now; add options when there's an actual use case.
+- **Redundant runtime validation**: don't add `if (!variant) throw ...` or null-checks for props already guaranteed by the `Props` type — TypeScript covers that at compile time for consumers using TS. Only validate genuinely runtime-uncertain input (e.g. values from an external API).
+- **Over-genericize**: don't design a component to be maximally "flexible" for hypothetical future consumers (extra generic type params, render-prop-everything, config objects with unused fields). Build for the concrete use case in front of you.
+- **JSDoc noise**: don't add a doc comment to every prop restating its name/type. Only comment a prop when its behavior isn't obvious from its name and type alone.
+
 ## What to avoid (explicit anti-patterns)
 
 - `export let` for props, `$:` reactive statements, `createEventDispatcher`, `on:event` directive syntax, `<slot>` for new multi-section components, stores (`writable`/`readable`) as the default state mechanism inside components (runes replace this for local/component state — stores are still fine for cross-component/global shared state, but don't reach for them by default).
