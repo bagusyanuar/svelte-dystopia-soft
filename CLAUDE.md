@@ -49,7 +49,40 @@ import { cn } from '@dystopia/soft-lib/utils/cn';
 - **Storybook interaction tests**: wired through `@storybook/addon-vitest`.
 - Run `npm run test` for the full suite (unit + e2e), or `npm run test:unit` for just Vitest.
 - New library features added to `src/lib` should get a colocated spec file, not just a routes/demo page.
+- `expect.requireAssertions` is on — a test with no assertion fails rather than silently passing.
 
+### Test harness components (`*.spec.svelte`)
+
+Some behavior can only be observed from _outside_ a component — chiefly whether a `bind:` prop actually propagates back to a consumer, and whether a `<Label for>` really focuses its field. Rendering the component alone can't show this: `render(PasswordField, …)` will happily pass while the binding is severed, because the value is still correct _inside_ the input.
+
+For those, add a small harness component next to the spec that mounts the real thing and exposes the outer state:
+
+```svelte
+<!-- BindingHarness.spec.svelte -->
+<script lang="ts">
+	import PasswordField from './PasswordField.svelte';
+	let value = $state('');
+</script>
+
+<PasswordField placeholder="Password" bind:value />
+<output data-testid="outer-value">{value}</output>
+```
+
+The `.spec.` in the filename is **load-bearing**, not decoration:
+
+- Vitest collects `*.svelte.spec.ts`, so a `*.spec.svelte` file is never picked up as a test file itself.
+- `package.json` `files` excludes `*.spec.*`, so the harness builds into `dist/` but stays out of the npm tarball.
+
+Name it after what it proves (`BindingHarness`, `AssociationHarness`), not after the component.
+
+### What deserves a test
+
+Prefer tests that would catch a **silent** break — one where every other signal stays green:
+
+- Two-way bindings surviving a wrapper component.
+- `type="button"` on a button inside a form (without it, the toggle submits the form).
+- ARIA wiring: `for`/`id` association, `aria-hidden` on decorative markup.
+- Consumer `class` actually overriding an internal one via `cn()`.
 
 ## Common commands
 

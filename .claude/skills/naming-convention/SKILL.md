@@ -14,6 +14,7 @@ description: File and folder naming convention for this library (kebab-case fold
   - `Button.variants.ts` (only if the component has `cva` variants — see [component-variants](../component-variants/SKILL.md))
   - `Button.svelte.spec.ts`
   - `Button.stories.svelte`
+  - `BindingHarness.spec.svelte` — only when a spec needs a wrapper to observe the component from outside; the `.spec.` infix keeps it out of both Vitest's collection glob and the npm tarball. See the Testing section in [CLAUDE.md](../../../CLAUDE.md).
 - **Everything else** (utils, helpers, non-component `.ts` files, plain `.spec.ts` for non-component logic): `kebab-case`. Example: `format-date.ts`, `format-date.spec.ts`.
 - **Component `Props` types**: always a dedicated colocated `ComponentName.types.ts` file (see [svelte5-best-practices](../svelte5-best-practices/SKILL.md)) — never inline in the `.svelte` file. This is a fixed rule, not a judgment call based on how "complex" the props are — consistency matters more than saving one file for a simple component. Only put a type in `src/lib/types/` (kebab-case filename) when it's genuinely shared across multiple components (e.g. a `Size` union used by `Button`, `Input`, and `Badge`).
 
@@ -99,6 +100,7 @@ Writing `.js` costs nothing and keeps `dist/` a 1:1 mirror of the source. Making
 | Util / helper file               | kebab-case                     | `format-date.ts`             |
 | Shared/cross-component type file | kebab-case                     | `size.ts`                    |
 | Per-component barrel             | lowercase                      | `index.ts`                   |
+| Test harness component           | PascalCase + `.spec.svelte`    | `BindingHarness.spec.svelte` |
 
 ## What to avoid
 
