@@ -35,7 +35,7 @@
 	{/snippet}
 </Story>
 
-<Story name="Sizes">
+<Story name="Sizes" asChild>
 	<div class="flex items-center gap-3">
 		<Button size="sm">Small</Button>
 		<Button size="md">Medium</Button>

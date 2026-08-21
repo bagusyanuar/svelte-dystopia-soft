@@ -43,6 +43,7 @@ There is **no `tailwind.config.js`**. Do not create one, and do not write v3-sty
 - **Default ring width** is `1px`, not `3px`. If a component needs the old look, use `ring-3` explicitly.
 - **`shrink-0`/`grow`** are the canonical names now; `flex-shrink-0`/`flex-grow` still work but prefer the short form in new code.
 - Preflight resets are stricter (buttons/inputs inherit font styles more aggressively) — check form elements visually after adding them.
+- **Preflight does not force `appearance: none`** on native form controls (`<button>`, `<input>`, `<select>`). Custom-styled interactive elements must add `appearance-none` explicitly in their `cva` base classes, or the browser's native chrome (most visible as a WebKit/Safari hover halo that doesn't match your `rounded-*`/bg) can render behind your styling. Add `appearance-none` (and `cursor-pointer` for clickable non-`<button>`-default elements) to every custom-styled interactive component.
 - Modern-browser-only output (uses native CSS cascade layers, `@property`, color-mix()). Don't add PostCSS-based fallbacks for older browsers unless asked.
 
 ## Component library specifics (important — this is not a regular app)
