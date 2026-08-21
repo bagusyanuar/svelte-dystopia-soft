@@ -65,6 +65,19 @@ Because form 3 wraps content in the meta `component`, a story like this:
 
 renders **an extra `Button` wrapping the whole row** — visible as a stray filled/rounded background behind the group that reacts to hover. It is not a CSS bug, a Tailwind bug, or a Storybook toolbar overlay. Any story that shows more than one instance of the component, or any non-component layout, **must** use `asChild` (form 2) or `template` (form 1).
 
+## Check both themes
+
+[.storybook/preview.ts](../../../.storybook/preview.ts) adds a **Theme** toolbar toggle that sets `data-theme` on `<html>`, so every story renders in light and dark. Review a new story in both before calling it done — a hardcoded palette shade (`bg-white`, `text-slate-700`) looks perfect in light and breaks only in dark, which is exactly why [design-theme](../design-theme/SKILL.md) bans them.
+
+Don't add a per-story theme wrapper or a light/dark duplicate story; the global toggle already covers it.
+
+How far the theme reaches is deliberate, set in [.storybook/storybook-theme.css](../../../.storybook/storybook-theme.css):
+
+- **Canvas view** — the whole preview (`html`, `body`, `#storybook-root`, `.sb-show-main`) follows the toggle.
+- **Docs view** — only the preview blocks (`.sbdocs.sbdocs-preview`, `.docs-story`) follow it. The surrounding docs page keeps its light chrome on purpose: the prose and arg tables are Storybook's own UI drawn in dark text, so darkening the page would make them unreadable.
+
+The docs selector needs both classes (`.sbdocs.sbdocs-preview`, specificity 0-2-0) because Storybook styles those blocks with an emotion class carrying a hardcoded white. Don't switch it to `!important` — that would also block a story from setting its own background.
+
 ## Args typing
 
 Type the `template` snippet arg with a narrowed `Pick<>` of the component's props, not the full `Props` interface — spreading a `Props` type that includes a required `children` onto an element that already has content produces `'children' is specified more than once`:

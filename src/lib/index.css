@@ -1,8 +1,102 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@theme {
-	--color-accent-50: oklch(0.97 0.02 264);
-	--color-accent-500: oklch(0.58 0.14 264);
-	--color-accent-600: oklch(0.5 0.15 264);
+/*
+  Theme tokens.
+
+  Two layers, on purpose:
+
+  1. Raw variables (`--surface`, `--foreground`, …) hold the actual colors.
+  2. `@theme inline` maps them to Tailwind's `--color-*` namespace, which is
+     what generates the `bg-surface` / `text-foreground` / `border-border`
+     utilities the components use.
+
+  `inline` is what makes theming work: it compiles `bg-surface` down to
+  `background-color: var(--surface)` — pointing straight at the raw variable
+  instead of at a second variable pinned to `:root` by Tailwind's theme layer.
+  A consumer can therefore redefine a token under ANY selector and it wins,
+  with no specificity fight and no `!important`:
+
+      [data-theme='sepia'] { --surface: oklch(97% 0.02 85); }
+      .invoice-preview     { --foreground: black; }
+
+  Components must only ever use these semantic utilities — never a raw palette
+  shade like `bg-slate-50`. A hardcoded shade is invisible to every theme.
+*/
+
+:root {
+	--surface: oklch(100% 0 0);
+	--surface-subtle: oklch(98.4% 0.003 247.858);
+	--surface-hover: oklch(96.8% 0.007 247.896);
+
+	--border: oklch(92.9% 0.013 255.508);
+	--border-hover: oklch(86.9% 0.022 252.894);
+
+	--foreground: oklch(20.8% 0.042 265.755);
+	--foreground-soft: oklch(37.2% 0.044 257.287);
+	--foreground-muted: oklch(44.6% 0.043 257.281);
+	--foreground-subtle: oklch(55.4% 0.046 257.417);
+	--foreground-faint: oklch(70.4% 0.04 256.788);
+
+	/* Brand teal. teal-700 rather than the more obvious teal-500/600: white
+	   text needs 4.5:1 to pass WCAG AA, and teal-500 only reaches 2.42:1,
+	   teal-600 3.66:1. teal-700 is 5.39:1. */
+	--primary: oklch(51.1% 0.096 186.391);
+	--primary-hover: oklch(43.7% 0.078 188.216);
+	--primary-foreground: oklch(100% 0 0);
+
+	--ring: oklch(51.1% 0.096 186.391);
+
+	--danger: oklch(71.2% 0.194 13.428);
+	--danger-border: oklch(81% 0.117 11.638);
+}
+
+[data-theme='dark'] {
+	--surface: oklch(12.9% 0.042 264.695);
+	--surface-subtle: oklch(20.8% 0.042 265.755);
+	--surface-hover: oklch(27.9% 0.041 260.031);
+
+	--border: oklch(27.9% 0.041 260.031);
+	--border-hover: oklch(37.2% 0.044 257.287);
+
+	--foreground: oklch(98.4% 0.003 247.858);
+	--foreground-soft: oklch(92.9% 0.013 255.508);
+	--foreground-muted: oklch(86.9% 0.022 252.894);
+	--foreground-subtle: oklch(70.4% 0.04 256.788);
+	--foreground-faint: oklch(55.4% 0.046 257.417);
+
+	/* Dark flips the relationship: a light teal fill carrying dark text.
+	   teal-400 against the dark surface is 10.81:1. */
+	--primary: oklch(77.7% 0.152 181.912);
+	--primary-hover: oklch(85.5% 0.138 181.071);
+	--primary-foreground: oklch(12.9% 0.042 264.695);
+
+	--ring: oklch(77.7% 0.152 181.912);
+
+	--danger: oklch(71.2% 0.194 13.428);
+	--danger-border: oklch(64.5% 0.246 16.439);
+}
+
+@theme inline {
+	--color-surface: var(--surface);
+	--color-surface-subtle: var(--surface-subtle);
+	--color-surface-hover: var(--surface-hover);
+
+	--color-border: var(--border);
+	--color-border-hover: var(--border-hover);
+
+	--color-foreground: var(--foreground);
+	--color-foreground-soft: var(--foreground-soft);
+	--color-foreground-muted: var(--foreground-muted);
+	--color-foreground-subtle: var(--foreground-subtle);
+	--color-foreground-faint: var(--foreground-faint);
+
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-foreground: var(--primary-foreground);
+
+	--color-ring: var(--ring);
+
+	--color-danger: var(--danger);
+	--color-danger-border: var(--danger-border);
 }

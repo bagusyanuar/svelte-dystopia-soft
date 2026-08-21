@@ -7,23 +7,35 @@ description: Design theme rules for "SaaS Soft Minimalist UI" — this library's
 
 These rules define the visual language for every component built in `src/lib`. Applies to all new and edited components. Goal: consistent, calm, low-contrast SaaS aesthetic (think Linear / Notion / Stripe Dashboard), not a generic Tailwind default look.
 
-Tokens should be defined via Tailwind v4 `@theme` (see [tailwind-v4 skill](../tailwind-v4/SKILL.md)), not scattered arbitrary values.
+## Color — semantic tokens only
 
-## Color
+**A component must never name a raw palette shade.** No `bg-slate-50`, no `text-slate-700`, no `bg-white`, no `text-rose-400`. A hardcoded shade is invisible to every theme: it ships as a literal class into `dist/`, so no consumer theme and not even the built-in dark theme can touch it. Use the semantic utilities generated from [src/lib/index.css](../../../src/lib/index.css):
 
-- **Neutral scale is the backbone.** Backgrounds, borders, and body text should come from Tailwind's `slate` or `zinc` scale — pick one and stay consistent across the whole library (don't mix `slate` and `gray` and `zinc`).
-- **Accent color: TBD — placeholder set below.** Until decided, use a muted indigo as the working default:
-  ```css
-  @theme {
-  	--color-accent-50: oklch(0.97 0.02 264);
-  	--color-accent-500: oklch(0.58 0.14 264);
-  	--color-accent-600: oklch(0.5 0.15 264);
-  }
-  ```
-  Replace these three stops when the real brand color is picked — keep the accent to a single hue with light/base/dark stops, not a full 50–950 ramp. Flag this as unresolved when reviewing component work; don't silently invent a different accent.
-- Accent color is used sparingly: primary buttons, active/selected states, focus rings, links. Not for large fills, backgrounds, or decorative use.
-- Avoid saturated/loud colors anywhere (no `red-500`/`green-500` at full saturation for status — prefer muted variants, e.g. `rose-400`/`emerald-400`, or desaturate via `oklch` in `@theme`).
-- No pure black (`#000`) or pure white (`#fff`) text/backgrounds. Use `slate-900`/`slate-950` and `slate-50`/`white` softened by neutral scale instead.
+| Utility                                                       | Role                                                     |
+| ------------------------------------------------------------- | -------------------------------------------------------- |
+| `bg-surface`                                                  | Base surface of a control or card                        |
+| `bg-surface-subtle`                                           | Recessed/filled surface, resting hover on ghost controls |
+| `bg-surface-hover`                                            | Hover step above `surface-subtle`                        |
+| `border-border` / `border-border-hover`                       | Resting and hover border                                 |
+| `text-foreground`                                             | Headings, primary text                                   |
+| `text-foreground-soft`                                        | Labels, control text                                     |
+| `text-foreground-muted`                                       | Body copy                                                |
+| `text-foreground-subtle`                                      | Secondary/supporting copy                                |
+| `text-foreground-faint`                                       | Placeholders, decorative icons                           |
+| `bg-primary` / `bg-primary-hover` / `text-primary-foreground` | The one accent, for primary actions                      |
+| `ring-ring`                                                   | Focus rings                                              |
+| `text-danger` / `border-danger-border`                        | Invalid and destructive states                           |
+
+Rules that still hold on top of the token list:
+
+- **The accent is used sparingly** — primary buttons, active/selected states, focus rings, links. Never for large fills, backgrounds, or decoration. One accent hue for the whole library; don't introduce a second "for variety."
+- **Text contrast has a floor.** `foreground-faint` is placeholder/icon weight only — it does not pass WCAG AA as body text. Paragraph copy stops at `foreground-subtle`.
+- **Every new token needs a dark value too.** Add it to `:root`, `[data-theme='dark']`, and the `@theme inline` map in the same edit, or dark mode silently breaks for that one color.
+- Both themes avoid pure black and pure white as text-on-background pairs; the darkest surface is a blue-tinted near-black, not `#000`.
+
+### Adding a token
+
+Only add one when an existing role genuinely doesn't fit — a bigger palette is harder to theme, not easier. Tailwind **silently emits nothing** for a utility whose token doesn't exist, so a typo like `bg-surface-subtel` produces no CSS and no error. After touching tokens, confirm the utility actually compiles rather than trusting the class name to look right.
 
 ## Radius
 
@@ -35,7 +47,7 @@ Tokens should be defined via Tailwind v4 `@theme` (see [tailwind-v4 skill](../ta
 ## Shadow & elevation
 
 - Shadows are **soft and shallow** — `shadow-sm` for resting state, `shadow-md` at most for popovers/dropdowns/modals. Never `shadow-lg`/`shadow-xl`/`shadow-2xl` — those read as heavy/skeuomorphic, not minimalist.
-- Prefer a **thin neutral border** (`border border-slate-200`) over shadow for simple separation (cards, list items). Reserve shadow for elements that float above content (menus, tooltips, modals).
+- Prefer a **thin neutral border** (`border border-border`) over shadow for simple separation (cards, list items). Reserve shadow for elements that float above content (menus, tooltips, modals).
 - No colored shadows unless deliberately asked for a glow effect on an interactive element (rare, opt-in only).
 
 ## Spacing & layout
@@ -48,14 +60,14 @@ Tokens should be defined via Tailwind v4 `@theme` (see [tailwind-v4 skill](../ta
 
 - Sans-serif only, clean system/UI font stack unless the user specifies a custom font via `@theme { --font-sans: ... }`.
 - Headings use `font-medium` or `font-semibold` — avoid `font-bold`/`font-black`, which reads harsh against this soft aesthetic.
-- Body text: `text-slate-600`/`700` range, not full-contrast `slate-900`, for anything non-heading — keeps hierarchy soft.
+- Body text: `text-foreground-muted`/`text-foreground-subtle`, not full-contrast `text-foreground`, for anything non-heading — keeps hierarchy soft.
 - Font sizes step gently: `text-sm` for body/UI, `text-base` sparingly, headings scale up through `text-lg`/`xl`/`2xl` — avoid jumping straight to large sizes for emphasis.
 
 ## Interaction states
 
 - Transitions: subtle and quick — `transition-colors duration-150` (or `transition` shorthand) on interactive elements. No bouncy/elastic easing, no long (>300ms) transitions for basic hover/focus.
-- Hover state: slight background/border tint shift (e.g. `hover:bg-slate-50`, `hover:border-slate-300`), not a strong color jump.
-- Focus state: visible focus ring using the accent color (`focus-visible:ring-2 focus-visible:ring-accent-500`) — never remove focus outlines outright (accessibility).
+- Hover state: slight background/border tint shift (e.g. `hover:bg-surface-subtle`, `hover:border-border-hover`), not a strong color jump.
+- Focus state: visible focus ring using the accent color (`focus-visible:ring-2 focus-visible:ring-ring`) — never remove focus outlines outright (accessibility).
 - Disabled state: reduce opacity (`opacity-50`) + `cursor-not-allowed`, don't just gray out inconsistently.
 
 ## What to avoid (explicit anti-patterns)
@@ -64,6 +76,17 @@ Tokens should be defined via Tailwind v4 `@theme` (see [tailwind-v4 skill](../ta
 - Don't pull in a second accent color "for variety." One accent hue, used sparingly, is the whole point of this style.
 - Don't hardcode hex/rgb colors directly in component markup — always go through `@theme` tokens so the whole library re-themes from one place.
 
-## Open decision
+## The accent is teal — and the stop was chosen for contrast, not looks
 
-Brand accent color is not finalized (see Color section above). When the user provides a real brand color, update the `--color-accent-*` stops in [src/lib/index.css](../../../src/lib/index.css) — the single shared theme source, also shipped to consumers, see [tailwind-v4](../tailwind-v4/SKILL.md) — and this rule stops being a placeholder.
+The brand accent is Tailwind's **teal**, set on `--primary` / `--primary-hover` / `--ring` in [src/lib/index.css](../../../src/lib/index.css). The specific stops are load-bearing; don't "correct" them to a more vivid teal:
+
+| Theme | Token             | Stop     | Contrast                     |
+| ----- | ----------------- | -------- | ---------------------------- |
+| light | `--primary`       | teal-700 | 5.39:1 vs white text — AA ✓  |
+| light | `--primary-hover` | teal-800 | 7.53:1 vs white text         |
+| dark  | `--primary`       | teal-400 | 10.81:1 vs dark surface text |
+| dark  | `--primary-hover` | teal-300 | 13.71:1 vs dark surface text |
+
+`teal-500` reaches only **2.42:1** against white and `teal-600` only **3.66:1** — both fail WCAG AA's 4.5:1 for button text, even though they read as the more "obviously teal" choice. Light and dark also invert deliberately: light is a dark fill with white text, dark is a light fill with dark text.
+
+If the brand color ever changes again, re-run the contrast math before picking stops rather than matching by eye, and update both the `:root` and `[data-theme='dark']` blocks. Nothing in any component changes.

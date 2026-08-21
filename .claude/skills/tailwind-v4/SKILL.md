@@ -11,12 +11,34 @@ This repo uses **Tailwind CSS v4.3** (`@tailwindcss/vite` + `@tailwindcss/typogr
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@theme {
-	--color-accent-50: oklch(0.97 0.02 264);
-	--color-accent-500: oklch(0.58 0.14 264);
-	--color-accent-600: oklch(0.5 0.15 264);
+:root {
+	--surface: oklch(100% 0 0);
+	--foreground: oklch(20.8% 0.042 265.755);
+	/* … */
+}
+
+[data-theme='dark'] {
+	--surface: oklch(12.9% 0.042 264.695);
+	--foreground: oklch(98.4% 0.003 247.858);
+	/* … */
+}
+
+@theme inline {
+	--color-surface: var(--surface);
+	--color-foreground: var(--foreground);
+	/* … */
 }
 ```
+
+**`@theme inline` is load-bearing — don't drop the `inline`.** It changes what the utility compiles to:
+
+```
+@theme inline      => .bg-surface { background-color: var(--surface) }
+@theme (no inline) => --color-surface: var(--surface);
+                      .bg-surface { background-color: var(--color-surface) }
+```
+
+With `inline`, the utility points straight at the raw variable, so redefining `--surface` under any selector (`[data-theme='dark']`, a consumer's `.brand`, a single scoped `<div>`) just works. Without it there are two hops and the middle variable is pinned to `:root` by Tailwind's theme layer, so consumer overrides have to fight the cascade. Full token list and usage rules live in [design-theme](../design-theme/SKILL.md).
 
 [src/routes/layout.css](../../../src/routes/layout.css) and [.storybook/preview.ts](../../../.storybook/preview.ts) both `@import`/import this file rather than duplicating it — **never** define `@theme` tokens or the `@import 'tailwindcss'` entry anywhere under `src/routes` or `.storybook`. Those are consumers of `src/lib/index.css`, not the source of truth.
 
@@ -39,7 +61,7 @@ There is **no `tailwind.config.js`**. Do not create one, and do not write v3-sty
 
 ## Breaking changes vs. v3 (don't assume old defaults)
 
-- **Default border/ring color** is now `currentColor`, not `gray-200`/`blue-500`. Always specify a color explicitly (`border-slate-200`) instead of relying on old implicit defaults.
+- **Default border/ring color** is now `currentColor`, not `gray-200`/`blue-500`. Always specify a color explicitly (`border-border`, `ring-ring`) instead of relying on old implicit defaults.
 - **Default ring width** is `1px`, not `3px`. If a component needs the old look, use `ring-3` explicitly.
 - **`shrink-0`/`grow`** are the canonical names now; `flex-shrink-0`/`flex-grow` still work but prefer the short form in new code.
 - Preflight resets are stricter (buttons/inputs inherit font styles more aggressively) — check form elements visually after adding them.
@@ -54,16 +76,16 @@ Since `src/lib` ships to npm consumers, two things matter that don't matter in a
 2. **Consumers' Tailwind won't see classes inside `node_modules` by default.** Tailwind v4's automatic source detection skips `.gitignore`d paths and `node_modules`. If a consumer app installs this package and uses Tailwind, their utilities used only inside our compiled `dist/` components won't be generated unless they add:
 
    ```css
-   @source '../node_modules/dystopia-soft-lib/dist';
+   @source '../node_modules/@dystopia/soft-lib/dist';
    ```
 
    Mention this requirement in the README/docs when finalizing the library — it's a common silent breakage for published Tailwind component libraries. Do not assume it "just works" like a same-repo app.
 
-3. **Ship the theme to consumers.** `src/lib/index.css` (with the `@theme` accent tokens) is exposed via a `package.json` `exports` subpath (`"./index.css": "./dist/index.css"`) and copied **unprocessed** into `dist/` by `svelte-package` — consumers import the raw source, and Tailwind compiles it as part of _their_ build. A consumer needs both of these in their own CSS entry to get correctly styled components:
+3. **Ship the theme to consumers.** `src/lib/index.css` (raw token values plus the `@theme inline` map) is exposed via a `package.json` `exports` subpath (`"./index.css": "./dist/index.css"`) and copied **unprocessed** into `dist/` by `svelte-package` — consumers import the raw source, and Tailwind compiles it as part of _their_ build. A consumer needs both of these in their own CSS entry to get correctly styled components:
    ```css
    @import 'tailwindcss';
-   @import 'dystopia-soft-lib/index.css';
-   @source '../node_modules/dystopia-soft-lib/dist';
+   @import '@dystopia/soft-lib/index.css';
+   @source '../node_modules/@dystopia/soft-lib/dist';
    ```
    When adding new shared design tokens (radius, spacing, fonts — not just color), add them to `src/lib/index.css`, never to `src/routes/layout.css` directly.
 
@@ -76,5 +98,5 @@ Since `src/lib` ships to npm consumers, two things matter that don't matter in a
 ## When editing CSS files in this repo
 
 - Keep `@import 'tailwindcss';` and `@plugin` declarations at the top of `src/lib/index.css` — that's the one canonical entry stylesheet.
-- New design tokens go in `@theme`, not scattered `:root` custom properties, unless the value is intentionally not a Tailwind-exposed token.
+- **Color** tokens are the deliberate exception to "everything in `@theme`": their raw values live in `:root` / `[data-theme='dark']` and are mapped through `@theme inline`, which is what makes them themeable (see the top of this file). Non-themeable tokens (fonts, breakpoints, spacing) go straight in a plain `@theme` block.
 - Run `npm run dev` and visually check components using Tailwind classes — v4 syntax errors in `@theme`/`@plugin` can fail silently in some setups, so don't assume correctness without seeing it render.

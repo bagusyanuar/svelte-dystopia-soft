@@ -1,0 +1,33 @@
+/*
+  Storybook paints its own surfaces behind a story — the preview body, the
+  canvas wrapper, and each docs preview block. They default to white, so
+  flipping `data-theme` on <html> themes the components but leaves them
+  sitting on a white sheet. Repaint those surfaces from the same tokens.
+*/
+
+html,
+body,
+#storybook-root,
+.sb-show-main,
+.docs-story {
+	background-color: var(--surface);
+	color: var(--foreground);
+}
+
+/*
+  Docs blocks are styled by emotion with a hardcoded white and a generated
+  class (`.css-8vrvo4`). That hash changes between Storybook versions, so
+  target the stable pair of classes instead — `.sbdocs.sbdocs-preview` is
+  specificity 0-2-0 and beats emotion's 0-1-0 no matter which sheet loads
+  last. `!important` would work too, but would also stop a story from
+  overriding its own background.
+
+  Deliberately NOT themed: `.sbdocs-wrapper`, the docs page itself. Its prose
+  and arg tables are Storybook's own UI, drawn in dark text that Storybook
+  themes separately — darkening the page would leave that text unreadable.
+  The chrome stays light; only the preview blocks follow the toggle.
+*/
+.sbdocs.sbdocs-preview {
+	background-color: var(--surface);
+	color: var(--foreground);
+}
