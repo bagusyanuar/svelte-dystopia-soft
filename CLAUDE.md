@@ -25,7 +25,7 @@ When asked to "add a feature to the library," it belongs in `src/lib/`. When ask
 
 ## Code style & UI conventions
 
-Svelte 5 runes syntax, Tailwind v4 syntax, and the "SaaS Soft Minimalist" design theme are covered by skills (`svelte5-best-practices`, `tailwind-v4`, `design-theme` in `.claude/skills/`) — they auto-load when writing/editing component or style code, so rules aren't duplicated here.
+Svelte 5 runes syntax, Tailwind v4 syntax, the "SaaS Soft Minimalist" design theme, and accessibility are covered by skills (`svelte5-best-practices`, `tailwind-v4`, `design-theme`, `accessibility` in `.claude/skills/`) — they auto-load when writing/editing component or style code, so rules aren't duplicated here.
 
 ## Public API discipline
 
@@ -46,7 +46,7 @@ import { cn } from '@dystopia/soft-lib/utils/cn';
 
 - **Unit / component tests**: Vitest, colocated as `*.spec.ts` (server/node) or `*.svelte.spec.ts` (browser, via `@vitest/browser-playwright`). See `src/lib/vitest-examples/` for the pattern.
 - **E2E tests**: Playwright, under `src/routes/demo/playwright`, run against the demo app.
-- **Storybook interaction tests**: wired through `@storybook/addon-vitest`.
+- **Storybook interaction + a11y tests**: wired through `@storybook/addon-vitest`. Every story is checked by axe at `test: 'error'`, so an accessibility violation fails the run — see the `accessibility` skill.
 - Run `npm run test` for the full suite (unit + e2e), or `npm run test:unit` for just Vitest.
 - New library features added to `src/lib` should get a colocated spec file, not just a routes/demo page.
 - `expect.requireAssertions` is on — a test with no assertion fails rather than silently passing.

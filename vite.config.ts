@@ -60,6 +60,13 @@ export default defineConfig({
 			},
 			{
 				extends: true,
+				// `aria-query` is CJS-only. Without pre-bundling it to ESM, the browser
+				// runner serves it raw and @storybook/addon-vitest's setup file dies on
+				// `does not provide an export named 'elementRoles'`, taking every story
+				// test (and the a11y checks) down with it.
+				optimizeDeps: {
+					include: ['@testing-library/dom', '@testing-library/jest-dom']
+				},
 				plugins: [
 					// The plugin will run tests for the stories defined in your Storybook config
 					// See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
