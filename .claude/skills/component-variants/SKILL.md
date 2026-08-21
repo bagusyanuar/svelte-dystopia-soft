@@ -27,7 +27,7 @@ export function cn(...inputs: ClassValue[]) {
 **Always use `cn()`** (never raw template-string class concatenation) whenever a component merges its own internal classes with a consumer-provided `class` prop:
 
 ```svelte
-<div class={cn('rounded-lg border border-slate-200 p-4', className)}>
+<div class={cn('rounded-lg border border-border p-4', className)}>
 ```
 
 This is what makes components "headless-friendly" (see [svelte5-best-practices](../svelte5-best-practices/SKILL.md)) — a consumer's override class always wins over the internal default, with no specificity fights or duplicate conflicting utilities.
@@ -51,13 +51,13 @@ components/
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const buttonVariants = cva(
-	'inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 disabled:opacity-50 disabled:cursor-not-allowed',
+	'inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed',
 	{
 		variants: {
 			variant: {
-				default: 'bg-accent-500 text-white hover:bg-accent-600',
-				outline: 'border border-slate-200 bg-transparent hover:bg-slate-50',
-				ghost: 'bg-transparent hover:bg-slate-50'
+				default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+				outline: 'border border-border bg-transparent hover:bg-surface-subtle',
+				ghost: 'bg-transparent hover:bg-surface-subtle'
 			},
 			size: {
 				sm: 'h-8 px-3 text-sm',
@@ -78,7 +78,7 @@ export type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 ```ts
 // Button.types.ts
 import type { Snippet } from 'svelte';
-import type { ButtonVariantProps } from './Button.variants';
+import type { ButtonVariantProps } from './Button.variants.js';
 
 export interface ButtonProps extends ButtonVariantProps {
 	class?: string;
@@ -90,9 +90,9 @@ export interface ButtonProps extends ButtonVariantProps {
 ```svelte
 <!-- Button.svelte -->
 <script lang="ts">
-	import { cn } from '../../utils/cn';
-	import { buttonVariants } from './Button.variants';
-	import type { ButtonProps } from './Button.types';
+	import { cn } from '../../utils/cn.js';
+	import { buttonVariants } from './Button.variants.js';
+	import type { ButtonProps } from './Button.types.js';
 
 	let { variant, size, class: className, disabled, children, ...rest }: ButtonProps = $props();
 </script>

@@ -63,7 +63,7 @@ Any component with visual state (open/closed, active, selected, checked) exposes
 <div data-state={open ? 'open' : 'closed'} data-disabled={disabled ? '' : undefined}>
 ```
 
-Internal `cva` variants can also select on these (`data-[state=open]:bg-accent-50`), but the attribute must be present regardless of whether the consumer uses the built-in styling.
+Internal `cva` variants can also select on these (`data-[state=open]:bg-surface-subtle`), but the attribute must be present regardless of whether the consumer uses the built-in styling.
 
 ## Expose the underlying DOM element
 
@@ -96,11 +96,13 @@ Some components have internal sub-parts (e.g. `TextField` with a prefix icon and
   </script>
 
   <div
-  	class={cn('flex items-center gap-2 rounded-lg border border-slate-200 p-2', classes?.container)}
+  	class={cn('flex items-center gap-2 rounded-lg border border-border p-2', classes?.container)}
   >
-  	{#if prefix}<span class={cn('text-slate-400', classes?.prefix)}>{@render prefix()}</span>{/if}
+  	{#if prefix}<span class={cn('text-foreground-faint', classes?.prefix)}>{@render prefix()}</span
+  		>{/if}
   	<input class={cn('flex-1 bg-transparent outline-none', classes?.input)} {...restProps} />
-  	{#if suffix}<span class={cn('text-slate-400', classes?.suffix)}>{@render suffix()}</span>{/if}
+  	{#if suffix}<span class={cn('text-foreground-faint', classes?.suffix)}>{@render suffix()}</span
+  		>{/if}
   </div>
   ```
 - **Independently composable parts** (`Select.Trigger`, `Select.Content`, `Select.Item`, `Card.Header`, `Card.Body`) — where a consumer genuinely benefits from rearranging, omitting, or reusing the sub-part on its own — get the full **compound component** treatment: separate exported components composed by the consumer, each following this skill's rules independently.
