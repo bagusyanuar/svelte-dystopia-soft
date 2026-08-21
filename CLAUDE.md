@@ -4,24 +4,24 @@ Guidance for Claude Code (and any other agent) working in this repository.
 
 ## Project purpose
 
-This is a **Svelte component/utility library** (`dystopia-soft-lib`), scaffolded with `sv create --template library`. The end goal is to publish it to npm as a reusable package for other Svelte projects to install and import — this repo is **not** an application.
+This is a **Svelte component/utility library** (`@dystopia/soft-lib`), scaffolded with `sv create --template library`. The end goal is to publish it to npm as a reusable package for other Svelte projects to install and import — this repo is **not** an application.
 
 ## Directory model — read this first
 
 This is the single most important thing to understand before editing anything here.
 
-- **`src/lib/`** — the actual library source. Everything exported from here (via `src/lib/index.ts`) is the public API shipped to npm consumers. Treat this as production code with a stable, external contract.
+- **`src/lib/`** — the actual library source. Each component folder's `index.ts` is a public entry point (see Public API discipline below). Treat this as production code with a stable, external contract.
 - **`src/routes/`** — a throwaway SvelteKit app used only for local dev/demo/preview (`npm run dev`) and for Playwright e2e tests. It is **never published**. Do not add real library logic here — only demo usage of what's already exported from `src/lib`.
-- **`src/stories/`** — Storybook stories for visually developing and documenting components in isolation. Same rule: showcase only, not part of the shipped package.
+- **Stories and specs** — colocated with their component inside `src/lib/components/<name>/`, not in a separate top-level directory. They build to `dist/` but are excluded from the npm tarball by the `files` field, so they never reach consumers.
 - **`dist/`** — build output of `svelte-package`, generated from `src/lib/`. This is what actually gets published. Never hand-edit; it's regenerated on build.
 
 ### Build vs. publish (don't confuse these)
 
 - `vite build` builds the full SvelteKit demo app (routes included) — used to validate the app still works, output not published.
 - `npm run prepack` → runs `svelte-package` — packages **only `src/lib`** into `dist/`.
-- `package.json` `"files"` field whitelists only `dist` for npm publish. Routes/stories build output never ships, no matter what.
+- `package.json` `"files"` whitelists `dist` and then subtracts `*.spec.*`, `*.stories.*`, and `vitest-examples` — colocated stories/tests build into `dist/` but must not ship. After adding a new kind of non-shipping file, run `npm pack --dry-run --ignore-scripts` and check it isn't in the tarball.
 
-When asked to "add a feature to the library," it belongs in `src/lib/`. When asked to "show/demo/test it visually," that goes in `src/routes/` or `src/stories/`.
+When asked to "add a feature to the library," it belongs in `src/lib/`. When asked to "show/demo/test it visually," that goes in the component's colocated `*.stories.svelte`, or in `src/routes/` for a full-app demo.
 
 ## Code style & UI conventions
 
@@ -29,8 +29,17 @@ Svelte 5 runes syntax, Tailwind v4 syntax, and the "SaaS Soft Minimalist" design
 
 ## Public API discipline
 
-- `src/lib/index.ts` is the single entry point / barrel file. Every component, function, type, or util meant for consumers must be explicitly re-exported here. If it's not exported from `index.ts`, it's not public API — don't rely on deep imports from consumer code or examples.
-- Before removing or renaming anything exported from `index.ts`, treat it as a breaking change (semver major). Prefer additive changes; deprecate before removing when possible.
+This library is **subpath-only** — there is deliberately no root barrel and no `src/lib/index.ts`. Consumers import each component from its own path:
+
+```ts
+import { TextField } from '@dystopia/soft-lib/components/text-field';
+import { cn } from '@dystopia/soft-lib/utils/cn';
+```
+
+- Each component folder's `index.ts` **is** its public entry point. Whatever it exports is public API; anything not re-exported there is internal. Use explicit named re-exports, never `export *` — see the per-component barrel section in the `naming-convention` skill.
+- The `exports` map in `package.json` uses wildcards (`"./components/*"`, `"./utils/*"`), so a new component folder with an `index.ts` is publicly importable with **no `package.json` change**. That cuts both ways: don't add a folder under `src/lib/components` or `src/lib/utils` unless it's meant to be public.
+- Importing the package root (`@dystopia/soft-lib`) fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`. That's intentional, not a bug — don't "fix" it by adding a `"."` export.
+- Before removing or renaming a folder, a folder's `index.ts` export, or an `exports` path, treat it as a breaking change (semver major). Prefer additive changes; deprecate before removing when possible.
 - Keep the public surface intentional and minimal — don't export internal helpers "just in case."
 
 ## Testing
@@ -40,6 +49,7 @@ Svelte 5 runes syntax, Tailwind v4 syntax, and the "SaaS Soft Minimalist" design
 - **Storybook interaction tests**: wired through `@storybook/addon-vitest`.
 - Run `npm run test` for the full suite (unit + e2e), or `npm run test:unit` for just Vitest.
 - New library features added to `src/lib` should get a colocated spec file, not just a routes/demo page.
+
 
 ## Common commands
 
@@ -62,7 +72,7 @@ Don't run `npm publish` automatically — always confirm with the user first. Wh
 1. Bump `version` in `package.json` (semver: breaking export changes = major, new exports = minor, fixes = patch).
 2. Ensure `package.json` `"name"`, `"license"`, `"repository"` fields are accurate (template placeholders may still be present).
 3. Run `npm run lint`, `npm run check`, `npm run test`, and `npm run prepack` to make sure `dist/` builds cleanly and `publint` passes.
-4. Verify `src/lib/index.ts` exports match what's intended to be public.
+4. Verify each component folder's `index.ts` exports match what's intended to be public, and run `npm pack --dry-run --ignore-scripts` to confirm the tarball holds only what should ship.
 
 ## Things to avoid
 

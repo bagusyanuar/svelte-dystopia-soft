@@ -1,6 +1,9 @@
 {
-	"name": "dystopia-soft-lib",
+	"name": "@dystopia/soft-lib",
 	"version": "0.0.1",
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
@@ -20,18 +23,22 @@
 	"files": [
 		"dist",
 		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*"
+		"!dist/**/*.spec.*",
+		"!dist/**/*.stories.*",
+		"!dist/vitest-examples"
 	],
 	"sideEffects": [
 		"**/*.css"
 	],
-	"svelte": "./dist/index.js",
-	"types": "./dist/index.d.ts",
 	"type": "module",
 	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"svelte": "./dist/index.js"
+		"./components/*": {
+			"types": "./dist/components/*/index.d.ts",
+			"svelte": "./dist/components/*/index.js"
+		},
+		"./utils/*": {
+			"types": "./dist/utils/*.d.ts",
+			"svelte": "./dist/utils/*.js"
 		},
 		"./index.css": "./dist/index.css"
 	},

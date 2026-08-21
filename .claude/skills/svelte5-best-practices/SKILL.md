@@ -39,7 +39,7 @@ export interface ButtonProps {
 </script>
 ```
 
-This matters more here than in a typical app — `Props` types are part of the public API surface consumers see in their editor, and a separate file lets [src/lib/index.ts](../../../src/lib/index.ts) re-export the type cleanly (`export type { ButtonProps } from './components/button/Button.types';`) without needing a `<script module>` block just to expose a type.
+This matters more here than in a typical app — `Props` types are part of the public API surface consumers see in their editor, and a separate file lets the component's own `index.ts` barrel re-export the type cleanly (`export type { ButtonProps } from './Button.types.js';`) without needing a `<script module>` block just to expose a type.
 
 ## Events
 
@@ -65,7 +65,7 @@ This matters more here than in a typical app — `Props` types are part of the p
 ## Component structure conventions for this library
 
 - One component per folder in `src/lib/components`, colocated with its `.types.ts`, `.svelte.spec.ts`, and `.stories.svelte` — full layout in [naming-convention](../naming-convention/SKILL.md).
-- Export every public component/util (and its `Props` type) through [src/lib/index.ts](../../../src/lib/index.ts) — see project [CLAUDE.md](../../../CLAUDE.md) for the public-API rule.
+- Export every public component (and its `Props` type) through its own folder `index.ts` barrel — this library is subpath-only, with no root barrel. See [naming-convention](../naming-convention/SKILL.md) for the barrel pattern and project [CLAUDE.md](../../../CLAUDE.md) for the public-API rule.
 - Keep components headless-friendly where reasonable: accept a `class` prop and merge it with internal classes (e.g. via `clsx`/`tailwind-merge` if added as a dependency) so consumers can override styling without fighting specificity.
 - Avoid `$effect` for anything that runs once on mount only to set initial state that could instead be computed inline or via `$derived`.
 
