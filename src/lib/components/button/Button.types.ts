@@ -7,4 +7,7 @@ export interface ButtonProps extends HTMLButtonAttributes, ButtonVariantProps {
 	ref?: HTMLButtonElement | null;
 	children: Snippet;
 	child?: Snippet<[{ props: Record<string, unknown> }]>;
+	isLoading?: boolean;
+	/** Replaces the built-in spinner shown while `isLoading` is true. */
+	loading?: Snippet;
 }
