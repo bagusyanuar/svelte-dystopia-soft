@@ -47,8 +47,11 @@
 
 	--ring: oklch(51.1% 0.096 186.391);
 
-	--danger: oklch(71.2% 0.194 13.428);
+	/* danger-500 fails white-text/text-on-white contrast the same way teal-500 does above —
+	   52% lightness is the point it clears 4.5:1 for body text while staying a clear "danger" red. */
+	--danger: oklch(52% 0.19 13.428);
 	--danger-border: oklch(81% 0.117 11.638);
+	--danger-foreground: oklch(100% 0 0);
 }
 
 [data-theme='dark'] {
@@ -75,6 +78,7 @@
 
 	--danger: oklch(71.2% 0.194 13.428);
 	--danger-border: oklch(64.5% 0.246 16.439);
+	--danger-foreground: oklch(12.9% 0.042 264.695);
 }
 
 @theme inline {
@@ -99,4 +103,21 @@
 
 	--color-danger: var(--danger);
 	--color-danger-border: var(--danger-border);
+	--color-danger-foreground: var(--danger-foreground);
+}
+
+@theme {
+	--animate-progress-indeterminate: progress-indeterminate 1.5s ease-in-out infinite;
+
+	@keyframes progress-indeterminate {
+		0% {
+			transform: translateX(-100%);
+		}
+		50% {
+			transform: translateX(100%);
+		}
+		100% {
+			transform: translateX(400%);
+		}
+	}
 }
