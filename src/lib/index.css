@@ -120,4 +120,90 @@
 			transform: translateX(400%);
 		}
 	}
+
+	/*
+	  Dialog enter/exit, applied by default via `data-[state=*]:animate-*`.
+
+	  The content keyframes deliberately touch `transform` only: Dialog centres
+	  its content with a flex wrapper rather than a translate, so these must not
+	  restate a centring offset — Tailwind v4 compiles `-translate-x-1/2` to the
+	  standalone `translate` property, which composes on top of `transform`
+	  instead of replacing it, and the two would stack into a doubled offset.
+	*/
+	--animate-dialog-overlay-in: dialog-overlay-in 150ms ease-out;
+	--animate-dialog-overlay-out: dialog-overlay-out 150ms ease-in;
+	--animate-dialog-content-in: dialog-content-in 150ms ease-out;
+	--animate-dialog-content-out: dialog-content-out 150ms ease-in;
+
+	@keyframes dialog-overlay-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes dialog-overlay-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes dialog-content-in {
+		from {
+			opacity: 0;
+			transform: scale(0.96);
+		}
+	}
+
+	@keyframes dialog-content-out {
+		to {
+			opacity: 0;
+			transform: scale(0.96);
+		}
+	}
+}
+
+/*
+  Dialog's default enter/exit, in the `components` layer on purpose.
+
+  Layer order is what makes this overridable: Tailwind orders `components`
+  before `utilities`, so any utility a consumer passes through `classes`
+  (`data-[state=open]:animate-…`, or `animate-none` to opt out) beats these
+  regardless of specificity. A utility class here instead would land in the
+  same layer as the consumer's and leave the winner to source order —
+  tailwind-merge can't arbitrate it, since it only knows Tailwind's five
+  built-in `animate-*` values and treats custom ones as unrelated classes.
+
+  Keyed on `data-slot` rather than the internal utility classes so the hook
+  stays stable if the styling changes.
+*/
+@layer components {
+	[data-slot='dialog-overlay'][data-state='open'] {
+		animation: var(--animate-dialog-overlay-in);
+	}
+
+	[data-slot='dialog-overlay'][data-state='closed'] {
+		animation: var(--animate-dialog-overlay-out);
+	}
+
+	[data-slot='dialog-content'][data-state='open'] {
+		animation: var(--animate-dialog-content-in);
+	}
+
+	[data-slot='dialog-content'][data-state='closed'] {
+		animation: var(--animate-dialog-content-out);
+	}
+
+	/*
+	  Same layer and same specificity as the four rules above, but later, so it
+	  switches only *these* defaults off — a consumer who deliberately sets an
+	  animation still gets it, since theirs is a utility and outranks the whole
+	  layer. `createPresence` unmounts immediately when no animation runs, so
+	  nothing is left hanging.
+	*/
+	@media (prefers-reduced-motion: reduce) {
+		[data-slot='dialog-overlay'][data-state],
+		[data-slot='dialog-content'][data-state] {
+			animation: none;
+		}
+	}
 }
