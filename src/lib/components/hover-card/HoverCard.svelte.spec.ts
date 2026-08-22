@@ -62,7 +62,14 @@ describe('HoverCard.svelte', () => {
 			content,
 			children: triggerChildren,
 			openDelay: 0,
-			closeDelay: 100
+			// unhover() and hover() are two separate real pointer actions, each a
+			// round trip through the automation driver — under load (e.g. the
+			// full suite running many files in parallel) that transit can take
+			// longer than a short delay leaves room for, closing the card before
+			// the second hover ever lands and making this test flaky. A generous
+			// delay keeps the assertion meaningful without racing test infra
+			// overhead.
+			closeDelay: 1000
 		});
 
 		await trigger().hover();
@@ -73,7 +80,7 @@ describe('HoverCard.svelte', () => {
 
 		// Well past the original close-delay window — still open because
 		// hovering the card cancelled the pending close.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await new Promise((resolve) => setTimeout(resolve, 1500));
 		await expect.element(cardContent()).toBeInTheDocument();
 	});
 
