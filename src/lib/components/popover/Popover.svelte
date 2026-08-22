@@ -3,6 +3,7 @@
 	import { floating } from '../../utils/floating.js';
 	import { portal } from '../../utils/portal.js';
 	import { createPresence } from '../../utils/presence.svelte.js';
+	import { createDismissableLayer } from '../../utils/dismissable-layer.js';
 	import type { PopoverProps } from './Popover.types.js';
 
 	let {
@@ -29,30 +30,19 @@
 		open = false;
 	}
 
-	function handlePointerDown(event: PointerEvent) {
-		const target = event.target as Node;
-		if (triggerEl?.contains(target) || contentEl?.contains(target)) return;
-		close();
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key !== 'Escape') return;
-		event.preventDefault();
-		close();
-		triggerEl?.focus();
-	}
-
 	$effect(() => {
 		if (!open) return;
 
 		contentEl?.focus({ preventScroll: true });
-		document.addEventListener('pointerdown', handlePointerDown);
-		document.addEventListener('keydown', handleKeydown);
 
-		return () => {
-			document.removeEventListener('pointerdown', handlePointerDown);
-			document.removeEventListener('keydown', handleKeydown);
-		};
+		return createDismissableLayer(() => [triggerEl, contentEl], {
+			onPointerDownOutside: close,
+			onEscapeKeydown: (event) => {
+				event.preventDefault();
+				close();
+				triggerEl?.focus();
+			}
+		});
 	});
 
 	const triggerProps = $derived({

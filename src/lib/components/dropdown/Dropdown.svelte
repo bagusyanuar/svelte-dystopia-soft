@@ -3,6 +3,8 @@
 	import { floating } from '../../utils/floating.js';
 	import { portal } from '../../utils/portal.js';
 	import { createPresence } from '../../utils/presence.svelte.js';
+	import { createDismissableLayer } from '../../utils/dismissable-layer.js';
+	import { createRovingFocus } from '../../utils/roving-focus.js';
 	import type { DropdownProps } from './Dropdown.types.js';
 
 	let {
@@ -32,87 +34,36 @@
 
 	// Focus is always moved here programmatically (never by tabbing into the
 	// list), so items stay out of the tab order permanently — no roving
-	// tabindex bookkeeping needed. Querying live avoids tracking item
-	// registration/order separately from the DOM.
-	function getItems(): HTMLButtonElement[] {
-		return contentEl
-			? Array.from(
-					contentEl.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
-				)
-			: [];
-	}
-
-	function focusFirst() {
-		getItems()[0]?.focus();
-	}
-
-	function focusLast() {
-		const items = getItems();
-		items[items.length - 1]?.focus();
-	}
-
-	function focusAdjacent(delta: 1 | -1) {
-		const items = getItems();
-		if (items.length === 0) return;
-		const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-		const nextIndex =
-			currentIndex === -1 ? 0 : (currentIndex + delta + items.length) % items.length;
-		items[nextIndex]?.focus();
-	}
-
-	let typeaheadBuffer = '';
-	let typeaheadTimer: ReturnType<typeof setTimeout> | undefined;
-
-	function typeahead(char: string) {
-		clearTimeout(typeaheadTimer);
-		typeaheadBuffer += char.toLowerCase();
-		typeaheadTimer = setTimeout(() => (typeaheadBuffer = ''), 500);
-
-		const items = getItems();
-		if (items.length === 0) return;
-		const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-		const ordered = [...items.slice(currentIndex + 1), ...items.slice(0, currentIndex + 1)];
-		const match = ordered.find((item) =>
-			item.textContent?.trim().toLowerCase().startsWith(typeaheadBuffer)
-		);
-		match?.focus();
-	}
-
-	function handlePointerDown(event: PointerEvent) {
-		const target = event.target as Node;
-		if (triggerEl?.contains(target) || contentEl?.contains(target)) return;
-		close();
-	}
+	// tabindex bookkeeping needed.
+	const roving = createRovingFocus({
+		getContainer: () => contentEl,
+		selector: '[role="menuitem"]:not(:disabled)'
+	});
 
 	function handleContentKeydown(event: KeyboardEvent) {
 		switch (event.key) {
 			case 'ArrowDown':
 				event.preventDefault();
-				focusAdjacent(1);
+				roving.focusAdjacent(1);
 				break;
 			case 'ArrowUp':
 				event.preventDefault();
-				focusAdjacent(-1);
+				roving.focusAdjacent(-1);
 				break;
 			case 'Home':
 				event.preventDefault();
-				focusFirst();
+				roving.focusFirst();
 				break;
 			case 'End':
 				event.preventDefault();
-				focusLast();
-				break;
-			case 'Escape':
-				event.preventDefault();
-				close();
-				triggerEl?.focus();
+				roving.focusLast();
 				break;
 			case 'Tab':
 				close();
 				break;
 			default:
 				if (event.key.length === 1 && event.key !== ' ') {
-					typeahead(event.key);
+					roving.typeahead(event.key);
 				}
 		}
 	}
@@ -143,14 +94,20 @@
 		if (!contentEl) return;
 
 		if (pendingFocus === 'last') {
-			focusLast();
+			roving.focusLast();
 		} else {
-			focusFirst();
+			roving.focusFirst();
 		}
 		pendingFocus = null;
 
-		document.addEventListener('pointerdown', handlePointerDown);
-		return () => document.removeEventListener('pointerdown', handlePointerDown);
+		return createDismissableLayer(() => [triggerEl, contentEl], {
+			onPointerDownOutside: close,
+			onEscapeKeydown: (event) => {
+				event.preventDefault();
+				close();
+				triggerEl?.focus();
+			}
+		});
 	});
 
 	const triggerProps = $derived({
