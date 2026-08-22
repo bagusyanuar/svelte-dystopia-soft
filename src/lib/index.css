@@ -52,6 +52,20 @@
 	--danger: oklch(52% 0.19 13.428);
 	--danger-border: oklch(81% 0.117 11.638);
 	--danger-foreground: oklch(100% 0 0);
+
+	/* Same 4.5:1-against-white constraint as danger, same hue kept between
+	   light and dark — 52% lightness reaches 5.62:1 as amber, not the paler
+	   "brand yellow" a naive amber-400/500 would give. */
+	--warning: oklch(52% 0.15 75);
+	--warning-border: oklch(83% 0.09 75);
+	--warning-foreground: oklch(100% 0 0);
+
+	/* 50% lightness reaches 5.59:1 — green needs a touch more lightness than
+	   red/amber at the same chroma before it reads as "green" rather than a
+	   near-black olive. */
+	--success: oklch(50% 0.16 145);
+	--success-border: oklch(82% 0.1 145);
+	--success-foreground: oklch(100% 0 0);
 }
 
 [data-theme='dark'] {
@@ -79,6 +93,16 @@
 	--danger: oklch(71.2% 0.194 13.428);
 	--danger-border: oklch(64.5% 0.246 16.439);
 	--danger-foreground: oklch(12.9% 0.042 264.695);
+
+	/* 66% lightness against the dark surface is 6.35:1. */
+	--warning: oklch(66% 0.13 75);
+	--warning-border: oklch(59% 0.165 75);
+	--warning-foreground: oklch(12.9% 0.042 264.695);
+
+	/* 64% lightness against the dark surface is 6.37:1. */
+	--success: oklch(64% 0.15 145);
+	--success-border: oklch(57% 0.19 145);
+	--success-foreground: oklch(12.9% 0.042 264.695);
 }
 
 @theme inline {
@@ -104,6 +128,14 @@
 	--color-danger: var(--danger);
 	--color-danger-border: var(--danger-border);
 	--color-danger-foreground: var(--danger-foreground);
+
+	--color-warning: var(--warning);
+	--color-warning-border: var(--warning-border);
+	--color-warning-foreground: var(--warning-foreground);
+
+	--color-success: var(--success);
+	--color-success-border: var(--success-border);
+	--color-success-foreground: var(--success-foreground);
 }
 
 @theme {
