@@ -169,13 +169,13 @@ describe('Dropdown.svelte', () => {
 		render(Dropdown, {
 			trigger,
 			children: noItems,
-			classes: { trigger: 'rounded-md' }
+			classes: { trigger: 'rounded-full' }
 		});
 
 		const button = page.getByRole('button', { name: 'Actions' }).element();
 
-		expect(button.className).toContain('rounded-md');
-		expect(button.className).not.toContain('rounded-lg');
+		expect(button.className).toContain('rounded-full');
+		expect(button.className).not.toContain('rounded-md');
 	});
 });
 

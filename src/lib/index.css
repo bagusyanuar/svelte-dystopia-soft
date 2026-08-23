@@ -138,6 +138,38 @@
 	--color-success-foreground: var(--success-foreground);
 }
 
+/*
+  Density scale — prep for the Linear-style migration tracked in
+  docs/component-roadmap.md. Pinned to the padding/gap values already most
+  common across src/lib/components (surveyed via grep), so defining this
+  block changes nothing visually today.
+
+  Radius and shadow need NO equivalent block: `rounded-lg`/`shadow-sm`/
+  `shadow-md` already resolve to Tailwind's own `--radius-lg`/`--shadow-sm`/
+  `--shadow-md` theme variables, so those are already a single dial —
+  override them directly in a plain `@theme` block when the time comes,
+  no prep needed.
+
+  Spacing has no such built-in dial: components reference literal `p-3`/
+  `px-4`/`gap-2` directly, so these tokens have no effect until each
+  component is migrated to the utilities they generate (Tailwind's
+  `--spacing-*` theme namespace turns each of these into real utilities:
+  `px-control-x`, `p-compact`, `gap-cozy`, etc — named `tight`/`cozy`/`loose`
+  rather than e.g. `--spacing-gap` so the generated class isn't the
+  stuttering `gap-gap`). That migration is deliberately NOT done here —
+  this block only adds the dial, one component at a time swaps onto it
+  later.
+*/
+@theme {
+	--spacing-control-x: 1rem; /* 4 — button/input horizontal padding */
+	--spacing-control-y: 0.5rem; /* 2 — button/input vertical padding */
+	--spacing-compact: 0.75rem; /* 3 — dense rows: list/menu items, popover content */
+	--spacing-surface: 1.5rem; /* 6 — card/dialog surface padding */
+	--spacing-tight: 0.375rem; /* 1.5 — icon-to-label gaps */
+	--spacing-cozy: 0.5rem; /* 2 — default inter-element gap */
+	--spacing-loose: 0.75rem; /* 3 — looser stacks (form fields, list rows) */
+}
+
 @theme {
 	--animate-progress-indeterminate: progress-indeterminate 1.5s ease-in-out infinite;
 

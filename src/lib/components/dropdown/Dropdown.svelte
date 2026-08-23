@@ -118,7 +118,7 @@
 		'aria-controls': contentId,
 		'data-state': open ? 'open' : 'closed',
 		class: cn(
-			'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			'inline-flex h-10 cursor-pointer items-center justify-center gap-tight rounded-md border border-border px-control-x text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			classes?.trigger
 		),
 		onclick: () => (open = !open),
@@ -143,7 +143,7 @@
 		use:portal={{ target: portalTarget }}
 		use:floating={{ reference: triggerEl, placement, offset }}
 		class={cn(
-			'z-50 min-w-40 rounded-lg border border-border bg-surface p-1 text-sm text-foreground-muted shadow-md focus-visible:outline-none',
+			'z-50 min-w-40 rounded-lg border border-border bg-surface p-1 text-sm text-foreground-muted shadow-sm focus-visible:outline-none',
 			classes?.content
 		)}
 	>

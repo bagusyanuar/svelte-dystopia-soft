@@ -75,9 +75,11 @@
 		class={cn(toastVariants({ variant: item.variant }), classes?.item)}
 	>
 		<div class="min-w-0 flex-1 space-y-1">
-			<p class={cn('font-medium text-foreground', classes?.title)}>{item.title}</p>
+			<p class={cn('leading-snug font-medium text-foreground', classes?.title)}>{item.title}</p>
 			{#if item.description}
-				<p class={cn('text-foreground-subtle', classes?.description)}>{item.description}</p>
+				<p class={cn('leading-snug text-foreground-subtle', classes?.description)}>
+					{item.description}
+				</p>
 			{/if}
 		</div>
 		<button
@@ -85,7 +87,7 @@
 			onclick={close}
 			aria-label={labels?.close ?? 'Close'}
 			class={cn(
-				'inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-lg text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+				'inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 				classes?.close
 			)}
 		>

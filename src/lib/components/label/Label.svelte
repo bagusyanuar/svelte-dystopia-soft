@@ -13,7 +13,7 @@
 
 <label
 	class={cn(
-		'inline-flex items-center gap-1 text-sm font-medium text-foreground-soft select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
+		'inline-flex items-center gap-tight text-sm leading-snug font-medium text-foreground-soft select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
 		className
 	)}
 	data-disabled={disabled ? '' : undefined}

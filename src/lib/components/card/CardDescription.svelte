@@ -5,6 +5,6 @@
 	let { class: className, children, ...restProps }: CardDescriptionProps = $props();
 </script>
 
-<div class={cn('text-sm text-foreground-subtle', className)} {...restProps}>
+<div class={cn('text-sm leading-snug text-foreground-subtle', className)} {...restProps}>
 	{@render children()}
 </div>

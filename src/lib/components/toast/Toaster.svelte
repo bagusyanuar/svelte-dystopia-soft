@@ -39,7 +39,7 @@
 	role="region"
 	aria-label={labels?.region ?? 'Notifications'}
 	class={cn(
-		'pointer-events-none fixed z-50 flex w-full max-w-sm flex-col gap-2 p-4',
+		'pointer-events-none fixed z-50 flex w-full max-w-sm flex-col gap-cozy p-4',
 		positionClasses[position],
 		className,
 		classes?.viewport

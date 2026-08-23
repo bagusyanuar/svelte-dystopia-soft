@@ -90,12 +90,12 @@ describe('Toggle.svelte', () => {
 	});
 
 	it('lets a consumer class override an internal one', async () => {
-		render(Toggle, { children: label, class: 'rounded-md' });
+		render(Toggle, { children: label, class: 'rounded-full' });
 
 		const button = page.getByRole('button', { name: 'Bold' }).element();
 
-		expect(button.className).toContain('rounded-md');
-		expect(button.className).not.toContain('rounded-lg');
+		expect(button.className).toContain('rounded-full');
+		expect(button.className).not.toContain('rounded-md');
 	});
 
 	it('forwards unrecognized attributes', async () => {

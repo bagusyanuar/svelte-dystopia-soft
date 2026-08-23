@@ -5,6 +5,6 @@
 	let { class: className, children, ...restProps }: CardContentProps = $props();
 </script>
 
-<div class={cn('p-6 pt-0', className)} {...restProps}>
+<div class={cn('p-surface pt-0', className)} {...restProps}>
 	{@render children()}
 </div>

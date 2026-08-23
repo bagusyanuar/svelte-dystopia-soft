@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const toastVariants = cva(
-	'pointer-events-auto flex w-full gap-3 rounded-lg border bg-surface p-4 text-sm shadow-md',
+	'pointer-events-auto flex w-full gap-loose rounded-lg border bg-surface p-4 text-sm shadow-sm',
 	{
 		variants: {
 			variant: {

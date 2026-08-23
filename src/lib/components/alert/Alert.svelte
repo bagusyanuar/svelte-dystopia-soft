@@ -31,12 +31,12 @@
 	{/if}
 	<div class="min-w-0 flex-1 space-y-1">
 		{#if title}
-			<p class={cn('font-medium', tone, classes?.title)}>
+			<p class={cn('leading-snug font-medium', tone, classes?.title)}>
 				{@render title()}
 			</p>
 		{/if}
 		{#if description}
-			<p class={cn('text-foreground-subtle', classes?.description)}>
+			<p class={cn('leading-snug text-foreground-subtle', classes?.description)}>
 				{@render description()}
 			</p>
 		{/if}

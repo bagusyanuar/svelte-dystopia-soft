@@ -8,7 +8,7 @@
 <p
 	role={invalid ? 'alert' : undefined}
 	data-invalid={invalid ? '' : undefined}
-	class={cn('text-sm', invalid ? 'text-danger' : 'text-foreground-subtle', className)}
+	class={cn('text-sm leading-snug', invalid ? 'text-danger' : 'text-foreground-subtle', className)}
 	{...restProps}
 >
 	{@render children()}

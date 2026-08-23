@@ -2,11 +2,11 @@
 
 Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
 
-Terakhir diperbarui: 2026-08-22 (`alert` selesai + token `warning`/`success`)
+Terakhir diperbarui: 2026-08-23 (`toast` selesai)
 
 ---
 
-## Sudah selesai (24 komponen)
+## Sudah selesai (25 komponen)
 
 Semua sudah punya `index.ts` sebagai public entry point.
 
@@ -42,6 +42,7 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `collapsible`
 - [x] `typography`
 - [x] `alert` — box notifikasi statis, bukan overlay (tanpa portal/presence/primitive apa pun). Variant `default`/`danger`/`warning`/`success`, `role="alert"`.
+- [x] `toast` — API imperatif (`toast.message/success/warning/danger(title, options)`) + komponen `<Toaster />` yang dipasang sekali di root. Store singleton module-level (`toast-store.svelte.ts`), viewport portalled, posisi 6-corner (default `bottom-right`), max 3 visible dengan sisanya nunggu giliran (bukan dibuang), auto-dismiss 5 detik dengan pause-on-hover, pakai `portal` + `createPresence` yang sudah ada. Lihat catatan "Keputusan API `toast`" di bawah untuk detail.
 
 ### Utilitas (`src/lib/utils/`)
 
@@ -74,7 +75,6 @@ Semua 5 primitive sekarang punya minimal satu consumer nyata lewat `dialog`.
 ## Tier 1 — hampir semua aplikasi butuh
 
 - [ ] `select` — lubang terbesar di form. Primitive siap: floating, roving-focus, id. Masih butuh: typeahead khusus form-value
-- [ ] `toast` — belum ada jalur feedback async. **Perlu keputusan API terpisah** (lihat catatan di bawah)
 - [ ] `tabs` — navigasi paling umum. Primitive siap: roving-focus, id
 - [ ] `separator` — sepele, sering dipakai. Tanpa dependensi
 - [ ] `avatar` — tanpa dependensi
@@ -107,11 +107,77 @@ Semua 5 primitive sekarang punya minimal satu consumer nyata lewat `dialog`.
 1. ~~Audit + ekstrak primitive~~ — selesai. `dismissable-layer`, `focus-trap`, `scroll-lock`, `roving-focus`, `id` ada di `src/lib/utils/`.
 2. ~~`dialog`~~ — selesai. Primitive tervalidasi lewat consumer nyata; pola default-animation + centering-lewat-wrapper siap dicontek komponen overlay berikutnya.
 3. ~~Batch murah — `alert`~~ — selesai, plus token `warning`/`success` baru ditambah ke theme (lihat catatan di bawah). Sisa batch murah: `separator`, `avatar`, `spinner`. ← next
-4. **`tabs`** lalu **`accordion`** — tinggal pakai `roving-focus` + `id` yang sudah ada.
-5. **`select`** — paling berat di Tier 1.
-6. **`toast`** — terakhir, karena polanya paling beda.
+4. ~~`toast`~~ — selesai duluan dari urutan awal (di luar giliran, atas permintaan) — polanya beda dari komponen lain (store singleton + API imperatif), lihat catatan di bawah.
+5. **`tabs`** lalu **`accordion`** — tinggal pakai `roving-focus` + `id` yang sudah ada.
+6. **`select`** — paling berat di Tier 1 yang tersisa.
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
+
+---
+
+## Rencana refactor: migrasi visual ke gaya Linear
+
+Status: **selesai semua** (2026-08-23) — step 1 (tokenisasi), step 2 (revisi skill), step 3 (refactor 25 komponen). Detail per komponen di bawah.
+
+**Tujuan.** Geser bahasa visual library dari "SaaS Soft Minimalist" (skill `design-theme` saat ini) ke arah gaya Linear app: density lebih tinggi, spacing lebih ketat, shadow nyaris flat dengan border sebagai pemisah utama, dark-first, typography lebih tajam.
+
+**Warna primary TIDAK ikut berubah.** Warna brand (`--primary`, `--primary-hover`, `--ring`) tetap warna client, bukan ungu ala Linear — yang diadopsi cuma pola/struktur (density, spacing, shadow, border, typography), bukan hue-nya.
+
+### Kenapa mahal — dan di mana letak mahalnya
+
+Layer warna sudah tersentralisasi lewat semantic token di `index.css` (satu titik ganti, otomatis nyebar). Layer spacing/radius/shadow/typography **belum** ditokenisasi dengan cara yang sama — tiap komponen menulis literal Tailwind class sendiri (`p-4`, `rounded-md`, `shadow-sm`, `gap-3`, dst) di file `.svelte`-nya masing-masing dan di `cva` variant-nya. Refactor ini karena itu menyentuh semua **25 komponen**, bukan satu file.
+
+Biaya per komponen:
+
+- Audit + edit manual class density/spacing/shadow/radius — gak ada satu titik ganti sampai step tokenisasi (di bawah) selesai.
+- `cva` variant (size/variant prop) ikut kena karena spacing nempel di situ.
+- Habis density berubah, hit-target elemen kecil (`button`, `checkbox`, `switch`, `radio`, `toggle`) harus dicek ulang terhadap skill `accessibility` — jangan turun di bawah minimum tap area.
+- Storybook axe test (`test: 'error'`) jalan ulang tiap komponen buat mastiin gak ada regresi a11y dari perubahan visual.
+- Ini breaking change *visual* (bukan breaking API/export) buat consumer yang sudah pakai versi lama — perlu diberi tahu lewat changelog/versioning, bukan cuma patch diam-diam.
+
+### Urutan yang disarankan
+
+1. ~~**Tokenisasi dulu**~~ — selesai (2026-08-23). Lihat catatan "Density scale token" di bawah untuk detail apa yang ditambah dan kenapa radius/shadow ternyata gak butuh token baru.
+2. ~~**Revisi skill `design-theme`**~~ — selesai (2026-08-23). Nama diganti "SaaS Compact Minimalist UI" (dari "Soft Minimalist"), diikutin di [CLAUDE.md](../CLAUDE.md). Aturan baru: radius default `rounded-md` buat kontrol/`rounded-lg` buat surface besar (dulu `rounded-lg` blanket), shadow cuma buat elemen floating dicap `shadow-sm` (dulu boleh sampai `shadow-md`, dan boleh dipasang di elemen resting), padding wajib lewat skala bernama step 1 (`p-compact`/`p-surface`/`gap-cozy` dst, bukan `p-4`/`p-6` reflex), line-height UI text `leading-snug`/`leading-tight` (dulu default relaxed). Skill ada catatan "Migration status" eksplisit: aturan baru cuma wajib buat komponen yang baru dibuat/diedit — komponen lama gak perlu disentuh di luar step 3.
+3. ~~**Refactor komponen satu per satu**~~ — selesai (2026-08-23), semua 25 komponen. Detail per komponen di bawah.
+   - [x] `button` — selesai (2026-08-23). `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight` (spinner/icon-to-label gap), size `md` horizontal padding `px-4` → `px-control-x` (nilai sama, sekarang lewat token). Size `sm`/`lg` (`px-3`/`px-6`) sengaja dibiarin literal — gak ada named role buat itu di skill, dan tinggi (`h-8`/`h-10`/`h-12`) gak disentuh karena skill gak ngatur scale tinggi/hit-target, itu ranah `accessibility` skill. Vitest (26 test, 4 file) tetap hijau.
+   - [x] `badge` — selesai (2026-08-23). `rounded-full` → `rounded-md` (skill: pill cuma buat count-badge/status-dot yang genuinely bulat — badge di sini dipakai generik buat tag teks kayak "New"/"Active", bukan counter; status dot-nya sendiri di story punya `rounded-full` terpisah, gak kesentuh). `gap-1` → `gap-tight` (dot/icon-ke-label gap, 0.25rem → 0.375rem). `px-2.5`/`py-0.5` dibiarin literal — gak ada named spacing role buat padding sekecil itu. Spec `lets a consumer class override an internal one` diupdate: override diuji pakai `rounded-full` (dulu `rounded-md`, jadi trivial pas itu jadi default baru) biar tetep nguji dedupe class yang beneran konflik. Vitest (9 test, 2 file) tetap hijau.
+   - [x] `text-field` — selesai (2026-08-23). `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight` (prefix/input/suffix gap). Size `lg` horizontal padding `px-4` → `px-control-x` (nilai sama, 1rem) — beda dari `button` yang kena di size `md`, karena di sini `lg` yang kebetulan senilai token; `sm`/`md` (`px-3`) dibiarin literal. `password-field` ikut kebawa gratis karena wrap `TextField`, gak ada variants file sendiri. Vitest (28 test, 4 file) tetap hijau.
+   - [x] `textarea` — selesai (2026-08-23). `rounded-lg` → `rounded-md`. Padding (`p-2`/`p-3`/`p-4`) dan gap textarea-ke-counter (`gap-1`) **sengaja gak diganti** — beda dari `button`/`text-field`, di sini gak ada named role yang beneran cocok: `p-compact` perannya "list/menu/popover row", bukan padding body form control, dan `gap-tight` perannya "icon-ke-label", bukan textarea-ke-counter. Ganti gara-gara nilainya kebetulan sama tanpa peran yang cocok = penyalahgunaan token, jadi dibiarin literal. Ini nunjukkin ada lubang di skala saat ini: belum ada role "form control full padding" — dicatat, bukan dipaksa ditambal sekarang (skill: token baru cuma ditambah kalau ada role yang genuinely gak cocok, bukan spekulatif). Vitest (19 test, 2 file) tetap hijau.
+   - [x] `password-field` — selesai (2026-08-23), gak ada perubahan. Sudah kebawa gratis waktu `text-field` direfactor (lihat catatan di sana), dan toggle button visibilitas-nya sendiri udah `rounded-md` dari awal, gak ada padding/gap literal buat diaudit.
+   - [x] `label` — selesai (2026-08-23). `gap-1` → `gap-tight` (gap teks label ke marker `*` required — bukan icon-to-label literal, tapi keluarga yang sama: elemen kecil nempel di sebelah teks, jadi dipake). Ditambah `leading-snug` — skill baru nyebut eksplisit "labels" sebagai contoh UI text yang kena aturan line-height ketat. Gak ada radius/shadow/padding buat diaudit (komponen ini cuma `<label>` inline, gak ada surface). Vitest (11 test, 2 file) tetap hijau.
+   - [x] `helper-text` — selesai (2026-08-23). Ditambah `leading-snug` — caption pendek di bawah form field, masuk kategori "UI text/labels" sama kayak `label`, bukan "longer-form body copy". Gak ada radius/shadow/padding/gap buat diaudit (cuma `<p>` inline). Vitest (10 test, 2 file) tetap hijau.
+   - [x] `checkbox` — selesai (2026-08-23), gak ada perubahan. Udah `rounded-md` dari awal, gak ada shadow, gak ada padding/gap literal yang match named role manapun. Ukuran kotak (`size-4/5/6`) sengaja gak disentuh — itu hit-target, ranah `accessibility` skill, bukan density skill (dicek ulang skill `accessibility` sebelum nyimpulkan ini — gak ada angka minimum tap area spesifik di sana, tapi shrink ukuran kontrol tetep di luar scope density refactor).
+   - [x] `radio` — selesai (2026-08-23), gak ada perubahan. `rounded-full` di sini (shell + dot indicator) bukan pilihan style pill kayak `badge` kemarin — itu bentuk wajib radio button secara native/semantik, jadi di luar cakupan aturan radius kontrol. Gak ada shadow/gap/padding literal yang relevan. Ukuran (`size-4/5/6`) sama kayak `checkbox`, hit-target territory, gak disentuh.
+   - [x] `switch` — selesai (2026-08-23), gak ada perubahan class, tapi ada satu keputusan yang perlu dicatat. Track + thumb sama-sama `rounded-full` — bentuk wajib toggle switch, sama kayak `radio`, di luar cakupan aturan radius. Sizes hit-target territory, gak disentuh. **Thumb-nya pakai `shadow-sm`** — sengaja dibiarin meski skill bilang "resting/in-flow element gak boleh shadow": thumb ini knob affordance (kayak Linear/iOS/Material toggle), beda kategori dari card/list-item yang diatur rule itu, dan nilainya udah di plafon (`shadow-sm`, gak pernah lebih) jadi gak melanggar cap-nya juga.
+   - [x] `button-group` — selesai (2026-08-23), gak ada perubahan. `rounded-*-none` dst cuma strip sudut spesifik anak `Button` — gak hardcode nilai radius, otomatis ngikutin radius Button sekarang. `-ml-px`/`-mt-px` itu trik border-collapse 1px, bukan spacing role. Gak ada shadow.
+   - [x] `card` — selesai (2026-08-23). `Card` sendiri udah compliant dari awal (`rounded-lg` emang nilai yang bener buat surface besar per skill, gak ada shadow — border-only, pas). `CardHeader`/`CardContent`/`CardFooter`: `p-6` → `p-surface` (match persis, 1.5rem, role "card/dialog surface padding"). `CardFooter`: `gap-2` → `gap-cozy` (match persis, 0.5rem, role "default inter-element gap" — footer isinya button-button sejajar). `CardTitle` ditambah `leading-tight` (heading), `CardDescription` ditambah `leading-snug` (caption pendek, bukan long-form prose). `CardHeader`'s `gap-1.5` (title-ke-description) **dibiarin literal** — nilainya kebetulan sama `gap-tight` (0.375rem) tapi perannya beda (vertical heading stack, bukan icon-to-label), jadi gak dipaksa ganti, sama disiplin kayak keputusan `textarea`. Urutan CSS `p-surface`/`pt-0` dicek di compiled output, override tetap bener. Vitest (18 test, 2 file) tetap hijau.
+   - [x] `collapsible` — selesai (2026-08-23). Container luar (`rounded-lg border`) **dibiarin** — udah bener buat surface. Trigger button-nya juga **dibiarin `rounded-lg`** (bukan diturunin ke `rounded-md` kayak kontrol lain) karena harus senada sama radius container: container gak punya `overflow-hidden`, jadi hover background trigger bakal nembus keluar sudut container yang melengkung kalau radiusnya beda — ini kasus dependency antar-komponen, bukan pengecualian sembarangan. Sisanya kena: trigger `gap-2` → `gap-tight` (label-ke-chevron), `px-4` → `px-control-x`, `py-3` → `py-compact` (row klik, role "dense rows" cocok), ditambah `leading-snug` (label pendek). Content wrapper: `px-4` → `px-control-x` (align sama trigger), `pb-3` → `pb-compact`; teks isinya **gak** ditambah `leading-snug` karena `children` bebas dari consumer, bisa berupa paragraf panjang, bukan cuma label pendek. Vitest (14 test, 2 file) tetap hijau, build compile bersih.
+   - [x] `dialog` — selesai (2026-08-23). Komponen overlay pertama yang direfactor — ini yang beneran nguji aturan shadow baru. Trigger button (bentuknya identik `Button` variant `outline`, jadi kena set perubahan yang sama): `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight`, `px-4` → `px-control-x`, ditambah `leading-snug`. Content panel (elemen floating, satu-satunya yang boleh shadow per skill): `rounded-lg` **dibiarin** (udah bener buat surface besar), `shadow-md` → `shadow-sm` (skill eksplisit larang `shadow-md` ke atas walau buat overlay), `p-6` → `p-surface` (role-nya literally nyebut "dialog" di skill). Title ditambah `leading-tight` (heading), description ditambah `leading-snug`. Close button (icon-only, `size-8`, posisinya `top-4 right-4` — cukup jauh dari sudut container jadi gak ada risiko clipping kayak `collapsible`): `rounded-lg` → `rounded-md`. `mt-1` (title-ke-description) dan `mt-4` (header-ke-body) dibiarin literal, gak ada role yang cocok. Vitest (29 test, 2 file) tetap hijau, build compile bersih.
+   - [x] `dropdown` — selesai (2026-08-23). Trigger sama persis kasusnya kayak `dialog` kemarin (bentuknya identik): `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight`, `px-4` → `px-control-x`, ditambah `leading-snug`. Content menu (floating): `shadow-md` → `shadow-sm`, radius `rounded-lg` dibiarin (surface), `p-1` dibiarin literal (gak ada role yang cocok). `DropdownItem` udah `rounded-md` dari awal (gak berubah): `gap-2` → `gap-tight`, `px-3` → `px-compact` (role-nya literally nyebut "menu items"), `py-2` **dibiarin** — gak ada token yang match nilai 0.5rem buat padding vertikal (`--spacing-cozy` nilainya sama tapi perannya gap, bukan padding). Spec trigger-override diupdate ke `rounded-full` (dulu `rounded-md`, jadi trivial pas itu jadi default baru), sama pola kayak fix `badge` kemarin. Vitest (23 test, 2 file) tetap hijau, build compile bersih.
+   - [x] `hover-card` — selesai (2026-08-23). Trigger cuma `<span class="inline-flex">` pembungkus `children` konsumen, gak ada yang diaudit. Content panel (floating): `shadow-md` → `shadow-sm`, radius `rounded-lg` dibiarin (surface). `p-4` **dibiarin literal** — beda dari `dialog`/`card` yang `p-6`-nya match persis `p-surface`, di sini nilainya (1rem) gak match token manapun: `p-compact` perannya pas ("popover content") tapi nilainya beda (0.75rem), `px-control-x` nilainya sama (1rem) tapi perannya buat button/input bukan padding kartu penuh. Value gak match role = dibiarin, konsisten sama keputusan `textarea`. Vitest (17 test, 2 file) tetap hijau.
+   - [x] `popover` — selesai (2026-08-23). Trigger sama persis kasusnya kayak `dialog`/`dropdown`: `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight`, `px-4` → `px-control-x`, ditambah `leading-snug`. Content panel sama persis kasusnya kayak `hover-card`: `shadow-md` → `shadow-sm`, radius `rounded-lg` dibiarin, `p-4` dibiarin literal (alasan sama — gak ada token yang match value-nya). Spec trigger-override diupdate ke `rounded-full`, pola sama kayak `badge`/`dropdown`. Vitest (17 test, 2 file) tetap hijau, build compile bersih.
+   - [x] `progress` — selesai (2026-08-23), gak ada perubahan. `rounded-full` (track + fill) bentuk konvensional progress bar, bukan pilihan style, sama alasannya kayak `radio`/`switch`. Gak ada padding/gap/shadow. Tinggi (`h-1.5/2/3`) ketebalan visual, bukan hit-target atau spacing role.
+   - [x] `skeleton` — selesai (2026-08-23), gak ada perubahan. Udah `rounded-md` dari awal, gak ada padding/gap/shadow buat diaudit — komponen ini cuma satu `<div>` placeholder.
+   - [x] `slider` — selesai (2026-08-23), gak ada perubahan. `rounded-full` (track + thumb) bentuk konvensional, sama kategori `radio`/`switch`/`progress`. `shadow-sm` di thumb sama persis alasannya kayak thumb `switch` (knob affordance, udah di plafon), konsisten dibiarin. Gak ada padding/gap.
+   - [x] `toast` — selesai (2026-08-23). `ToastItem` (floating, boleh shadow): `shadow-md` → `shadow-sm`, `rounded-lg` dibiarin (surface), `p-4` dibiarin literal (alasan sama kayak `hover-card`/`popover`). `gap-3` → `gap-loose` (match persis 0.75rem — gap antara blok teks sama tombol close, dianggap masuk kategori "elemen distinct dalam satu row", bukan icon-to-label). Title + description ditambah `leading-snug` (notifikasi pendek, bukan long-form). Close button: `rounded-lg` → `rounded-md` (posisinya flex child di dalam `p-4`, jauh dari sudut, gak ada risiko clipping kayak `collapsible`). `Toaster` (viewport): `gap-2` → `gap-cozy` (match persis, stack antar toast = "default inter-element gap"), `p-4` (inset dari tepi layar) dibiarin — bukan padding surface, gak ada role yang cocok. Vitest (20 test, 2 file) tetap hijau, build compile bersih.
+   - [x] `toggle` — selesai (2026-08-23). Bentuknya identik `button` (base + 3 size sama persis): `rounded-lg` → `rounded-md`, `gap-2` → `gap-tight`, size `md` `px-4` → `px-control-x`; `sm`/`lg` dibiarin literal, sama kayak `button`. Spec override diupdate ke `rounded-full` (pola sama kayak `badge`/`dropdown`/`popover`). Vitest (18 test, 2 file) tetap hijau.
+   - [x] `tooltip` — selesai (2026-08-23). Trigger cuma `<span>` pembungkus, gak diaudit. Content (floating): `shadow-md` → `shadow-sm`. Radius **udah `rounded-md` dari awal, dibiarin** — beda dari `dialog`/`dropdown`/`popover`/`hover-card` yang surface-nya `rounded-lg`, tooltip itu bubble kecil bukan panel besar, jadi masuk kategori "kontrol/elemen kecil" yang skill emang minta `rounded-md`. `px-2`/`py-1` dibiarin literal — kekecilan, gak ada token yang match. Vitest (19 test, 2 file) tetap hijau.
+   - [x] `typography` — selesai (2026-08-23). Gak ada radius/shadow/padding/gap (murni text styling). `h1`-`h4` ditambah `leading-tight` (heading). `small` ditambah `leading-snug` (caption pendek, kayak `label`/`helper-text`). `body` dan `muted` **dibiarin** — ini justru komponen yang eksplisit disebut skill sebagai pengecualian "prose content", tetep di line-height default Tailwind buat ukuran fontnya. Vitest (9 test, 2 file) tetap hijau.
+   - [x] `alert` — selesai (2026-08-23). Bentuknya paralel sama `toast` (resting version-nya): `gap-3` → `gap-loose` (icon-ke-content-block, sama kategori "elemen distinct dalam row" kayak keputusan `toast`), title + description ditambah `leading-snug`. Radius (`rounded-lg`, surface) dan `p-4` dibiarin — alasan sama kayak `toast`/`hover-card`/`popover`. Vitest (20 test, 2 file) tetap hijau.
+
+   **Step 3 selesai — semua 25 komponen udah dimigrasi ke gaya Linear.** Full suite dicek ulang di akhir: `npm run test:unit` (57 file, 416 test) dan `--project storybook` (25 story, 142 axe check) semua hijau, gak ada regresi a11y dari perubahan radius/shadow/spacing/line-height di seluruh library.
+4. Tiap komponen yang direfactor: update spec/story kalau ada assertion yang terikat ke class lama, re-run axe check.
+
+Belum ada estimasi waktu/token pasti — sifatnya mekanis dan berulang per komponen, bukan kompleks secara logika.
+
+### Density scale token — apa yang ditambah di step 1
+
+Ditambah ke [src/lib/index.css](../src/lib/index.css): blok `@theme` baru berisi skala spacing bernama (`--spacing-control-x/-y`, `--spacing-compact`, `--spacing-surface`, `--spacing-tight/-cozy/-loose`), dipin ke nilai yang sudah paling umum dipakai di `src/lib/components` (disurvei lewat grep) — jadi nambah blok ini **gak mengubah tampilan apa pun** hari ini. (`tight`/`cozy`/`loose`, bukan `--spacing-gap-*` — biar utility yang dihasilkan gak jadi `gap-gap`.)
+
+Ternyata radius dan shadow gak butuh token baru sama sekali: `rounded-lg`/`shadow-sm`/`shadow-md` di komponen sudah resolve ke variabel theme Tailwind sendiri (`--radius-lg`, `--shadow-sm`, `--shadow-md`) — itu sudah jadi satu titik ganti out of the box. Nanti pas mau ubah, tinggal override langsung di `@theme`, gak perlu prep apa pun.
+
+Bedanya sama radius/shadow: token spacing di atas **belum dipakai komponen manapun**. Tailwind `--spacing-*` di namespace theme menghasilkan utility asli (`px-control-x`, `p-compact`, `gap-cozy`, dst), tapi sampai tiap komponen dipindah dari literal (`px-4`, `p-3`, `gap-2`) ke utility semantik ini di step 3, token-nya belum ngaruh apa-apa. Setelah dipindah, ganti density berikutnya baru beneran jadi satu baris di `index.css`, bukan 25 file lagi.
 
 ---
 
@@ -140,11 +206,22 @@ Tailwind v4 compile `-translate-x-1/2`/`-translate-y-1/2` jadi property `transla
 
 Pola ini reusable buat komponen lain yang mau punya default animation yang overridable: token `--animate-*` + `@keyframes` di `@theme`, rule aktualnya di `@layer components` dikunci ke `data-slot`, guard `prefers-reduced-motion` di layer yang sama.
 
-### `toast` butuh keputusan API tersendiri
+### Keputusan API `toast`
 
-Beda dari komponen lain: perlu provider / singleton store, jadi tidak murni subpath-only seperti sisanya.
-Konsumen memanggilnya secara imperatif (`toast.success(...)`), bukan dengan me-render komponen.
-Perlu dibahas dulu sebelum ditulis.
+Beda dari komponen lain: perlu provider/singleton store, jadi tidak murni subpath-only seperti sisanya. Keputusan yang diambil (2026-08-23):
+
+- **API imperatif + komponen siap-pakai** — `<Toaster />` dipasang sekali di root app (mis. `+layout.svelte` konsumen), lalu `toast.message/success/warning/danger(title, options?)` dipanggil dari mana saja (event handler, `catch` block, dll). Store singleton module-level (`toast-store.svelte.ts`, pakai `$state` bukan Svelte store klasik) nge-drive keduanya. Alternatif yang ditolak: store-only tanpa UI siap-pakai (headless total) — ditolak karena tiap konsumen harus bikin ulang stacking/animasi/a11y dari nol, beda dari pola alert/dialog yang udah ada.
+- **Posisi default `bottom-right`**, configurable lewat prop `position` (6 corner).
+- **Auto-dismiss 5 detik, max 3 toast visible, pause-on-hover.** Toast di atas batas `max` nunggu (gak langsung dibuang) — baru render begitu ada slot kosong, dan timer-nya baru mulai jalan begitu dia visible (bukan dari saat di-queue).
+- Variant toast pakai token yang sama kayak `alert` (`default`/`danger`/`warning`/`success`) — gak ada token baru.
+- Reuse primitive yang sudah ada: `portal` (viewport keluar tree) dan `createPresence` (tunda unmount sampai exit animation kelar), pola sama kayak `dialog`/`popover`. Default animation lewat `@layer components` + `data-slot='toast'`, pola sama kayak dialog (lihat catatan animation di atas).
+- Timer per-toast dijadwalin sinkron di top-level script komponen (bukan di dalam `$effect` tanpa dependency), dibersihkan lewat `onDestroy` — kalau dipindah ke `$effect` malah bikin race di test browser (lihat catatan testing di bawah).
+
+### Testing timer real-time itu gak reliable di browser test project ini
+
+`Toaster`/toast punya auto-dismiss dan pause-on-hover yang butuh nunggu waktu betulan buat diuji. Nunggu pakai `setTimeout` biasa (`await new Promise(r => setTimeout(r, ms))`) plus `expect.element(...).not.toBeInTheDocument()` kena flaky parah — kadang lancar ~2 detik, kadang macet belasan detik sampai timeout, gak konsisten walau durasinya udah dibesarin jauh di atas overhead test-infra (lihat juga catatan fix `HoverCard` hover-travel buat kelas masalah yang mirip, soal round-trip pointer). Coordinate-based `userEvent.hover()` juga gak reliable buat toast karena project test browser ini gak load stylesheet apa pun (sama kayak alasan test overlay-click `Dialog` dispatch event langsung, bukan klik koordinat) — layout box toast di test env gak sama kayak di app beneran, jadi hover bisa nembak enter lalu langsung leave lagi.
+
+Fix-nya: pakai `vi.useFakeTimers()` + `await vi.advanceTimersByTimeAsync(ms)` buat kontrol waktu, dan `element.dispatchEvent(new PointerEvent(...))` langsung ke node buat simulasi hover/leave (bukan `userEvent.hover()`). Hasilnya deterministic dan cepat (~140ms buat 15 test, vs belasan detik + kadang gagal). **Pola ini reusable buat komponen lain yang nanti punya delay/timer real-time** (mis. `HoverCard` kalau testnya mau dirapiin ulang, atau `drawer`/`sheet` kalau punya auto-close).
 
 ### Hal yang perlu dicek saat menambah komponen
 

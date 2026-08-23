@@ -70,7 +70,7 @@
 		'aria-controls': ids.content,
 		'data-state': open ? 'open' : 'closed',
 		class: cn(
-			'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			'inline-flex h-10 cursor-pointer items-center justify-center gap-tight rounded-md border border-border px-control-x text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			classes?.trigger
 		),
 		onclick: () => (open = !open)
@@ -130,17 +130,20 @@
 			tabindex="-1"
 			inert={!open}
 			class={cn(
-				'pointer-events-auto relative w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-md focus-visible:outline-none',
+				'pointer-events-auto relative w-full max-w-md rounded-lg border border-border bg-surface p-surface shadow-sm focus-visible:outline-none',
 				classes?.content
 			)}
 		>
-			<h2 id={ids.title} class={cn('pr-8 text-lg font-medium text-foreground', classes?.title)}>
+			<h2
+				id={ids.title}
+				class={cn('pr-8 text-lg leading-tight font-medium text-foreground', classes?.title)}
+			>
 				{@render title()}
 			</h2>
 			{#if description}
 				<p
 					id={ids.description}
-					class={cn('mt-1 text-sm text-foreground-subtle', classes?.description)}
+					class={cn('mt-1 text-sm leading-snug text-foreground-subtle', classes?.description)}
 				>
 					{@render description()}
 				</p>
@@ -153,7 +156,7 @@
 				onclick={close}
 				aria-label={labels?.close ?? 'Close'}
 				class={cn(
-					'absolute top-4 right-4 inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+					'absolute top-4 right-4 inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 					classes?.close
 				)}
 			>

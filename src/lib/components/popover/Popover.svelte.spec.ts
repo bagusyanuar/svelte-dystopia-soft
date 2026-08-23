@@ -158,12 +158,12 @@ describe('Popover.svelte', () => {
 		render(Popover, {
 			trigger,
 			children: content,
-			classes: { trigger: 'rounded-md' }
+			classes: { trigger: 'rounded-full' }
 		});
 
 		const button = page.getByRole('button', { name: 'Open' }).element();
 
-		expect(button.className).toContain('rounded-md');
-		expect(button.className).not.toContain('rounded-lg');
+		expect(button.className).toContain('rounded-full');
+		expect(button.className).not.toContain('rounded-md');
 	});
 });

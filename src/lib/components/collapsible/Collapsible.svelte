@@ -24,7 +24,7 @@
 		data-state={open ? 'open' : 'closed'}
 		onclick={() => (open = !open)}
 		class={cn(
-			'flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-left text-sm font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			'flex w-full items-center justify-between gap-tight rounded-lg px-control-x py-compact text-left text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			classes?.trigger
 		)}
 	>
@@ -56,7 +56,7 @@
 		)}
 	>
 		<div class="overflow-hidden">
-			<div class={cn('px-4 pb-3 text-sm text-foreground-muted', classes?.content)}>
+			<div class={cn('px-control-x pb-compact text-sm text-foreground-muted', classes?.content)}>
 				{@render children()}
 			</div>
 		</div>

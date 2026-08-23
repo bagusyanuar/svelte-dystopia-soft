@@ -17,7 +17,7 @@
 		tabindex: -1,
 		disabled,
 		class: cn(
-			'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:bg-surface-subtle focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			'flex w-full items-center gap-tight rounded-md px-compact py-2 text-left text-sm text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:bg-surface-subtle focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			className
 		),
 		onclick: () => {

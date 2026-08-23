@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-export const alertVariants = cva('flex gap-3 rounded-lg border bg-surface p-4 text-sm', {
+export const alertVariants = cva('flex gap-loose rounded-lg border bg-surface p-4 text-sm', {
 	variants: {
 		variant: {
 			default: 'border-border text-foreground-muted',

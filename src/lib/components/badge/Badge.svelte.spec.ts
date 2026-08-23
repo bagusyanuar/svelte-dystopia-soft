@@ -16,12 +16,12 @@ describe('Badge.svelte', () => {
 	});
 
 	it('lets a consumer class override an internal one', async () => {
-		render(Badge, { children: text, class: 'rounded-md' });
+		render(Badge, { children: text, class: 'rounded-full' });
 
 		const el = page.getByText('New').element().parentElement;
 
-		expect(el?.className).toContain('rounded-md');
-		expect(el?.className).not.toContain('rounded-full');
+		expect(el?.className).toContain('rounded-full');
+		expect(el?.className).not.toContain('rounded-md');
 	});
 
 	it('forwards unrecognized attributes', async () => {

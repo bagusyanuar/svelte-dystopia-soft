@@ -25,7 +25,7 @@ When asked to "add a feature to the library," it belongs in `src/lib/`. When ask
 
 ## Code style & UI conventions
 
-Svelte 5 runes syntax, Tailwind v4 syntax, the "SaaS Soft Minimalist" design theme, and accessibility are covered by skills (`svelte5-best-practices`, `tailwind-v4`, `design-theme`, `accessibility` in `.claude/skills/`) — they auto-load when writing/editing component or style code, so rules aren't duplicated here.
+Svelte 5 runes syntax, Tailwind v4 syntax, the "SaaS Compact Minimalist" design theme, and accessibility are covered by skills (`svelte5-best-practices`, `tailwind-v4`, `design-theme`, `accessibility` in `.claude/skills/`) — they auto-load when writing/editing component or style code, so rules aren't duplicated here.
 
 ## Public API discipline
 

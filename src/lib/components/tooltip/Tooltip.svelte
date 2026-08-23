@@ -95,7 +95,7 @@
 		use:portal={{ target: portalTarget }}
 		use:floating={{ reference: triggerEl, placement, offset, arrowEl: showArrow ? arrowEl : null }}
 		class={cn(
-			'group pointer-events-none z-50 rounded-md bg-foreground px-2 py-1 text-xs text-surface shadow-md',
+			'group pointer-events-none z-50 rounded-md bg-foreground px-2 py-1 text-xs text-surface shadow-sm',
 			classes?.content
 		)}
 	>

@@ -129,7 +129,7 @@
 		use:portal={{ target: portalTarget }}
 		use:floating={{ reference: triggerEl, placement, offset }}
 		class={cn(
-			'z-50 rounded-lg border border-border bg-surface p-4 text-sm text-foreground-muted shadow-md',
+			'z-50 rounded-lg border border-border bg-surface p-4 text-sm text-foreground-muted shadow-sm',
 			classes?.content
 		)}
 	>
