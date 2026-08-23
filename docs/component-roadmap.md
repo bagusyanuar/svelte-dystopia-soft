@@ -2,11 +2,11 @@
 
 Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
 
-Terakhir diperbarui: 2026-08-23 (`empty-state` selesai — Tier 2 tuntas)
+Terakhir diperbarui: 2026-08-23 (`calendar` + `date-picker` selesai — Tier 3 dimulai)
 
 ---
 
-## Sudah selesai (37 komponen)
+## Sudah selesai (39 komponen)
 
 Semua sudah punya `index.ts` sebagai public entry point.
 
@@ -79,6 +79,27 @@ Semua sudah punya `index.ts` sebagai public entry point.
   - `labels` terstruktur (`nav`/`previous`/`next`/`page` function) — gak ada hardcode English tanpa override, termasuk `nav` yang notabene `Breadcrumb` sendiri hardcode `aria-label="breadcrumb"` tanpa override (`Pagination` sengaja lebih ketat ngikutin skill `accessibility`).
 - [x] `empty-state` — selesai (2026-08-23), Tier 2, tuntas. Single component (bukan compound) — sama kelasnya kayak `alert`, variance layout-nya rendah (icon-title-description-action, satu bentuk yang dipakai hampir semua app), gak ada alasan buat full compound treatment. Struktur & prop shape literally nyontek `alert` (`icon`/`title`/`description` snippet + `children` buat action, `classes` terstruktur per-part) — bedanya: layout `flex-col items-center text-center` (bukan horizontal kayak alert), gak ada `variant`/border/background default (biar gak nested-double-border kalau ditaro di dalam `Card`/`Table`/container lain yang udah punya border sendiri — liat story "Inside a table"), icon lebih besar (`size-10`, ikon ilustrasi bukan ikon kecil notifikasi), `role="status"` (bukan `role="alert"` — live region polite, buat kasus umum "hasil search/filter jadi kosong" yang wajar di-announce ke AT tapi gak urgent, beda dari alert yang assertive).
 
+### Date & time
+
+- [x] `calendar` — selesai (2026-08-23), Tier 3, komponen pertama yang butuh dependency baru. Pakai **`@internationalized/date`** (bukan native `Date`) — masuk `dependencies` biasa (bukan `peerDependencies` kayak `@tanstack/svelte-table`, karena dipakai internal buat date math, bukan instance yang consumer construct sendiri). `value` bindable bertipe `CalendarDate` (immutable, timezone-safe), bukan native `Date` — konsumen convert sendiri lewat `.toDate(timeZone)` kalau butuh.
+  - **`src/lib/utils/calendar-grid.ts`** — pure function `getCalendarGrid({ date, locale })`, return matrix minggu (`CalendarCell[][]`), pola sama persis `pagination-range.ts`: delegasiin kalkulasi berat (leap year, week boundary lintas bulan/locale) ke `startOfMonth`/`endOfMonth`/`startOfWeek`/`endOfWeek` dari `@internationalized/date`, terus tinggal walk day-by-day chunking ke baris 7. Ada spec sendiri (`calendar-grid.spec.ts`, pure logic, termasuk kasus leap year dan locale week-start beda).
+  - **Semi-headless kayak `pagination`, bukan full-headless kayak `table`** — alasan sama: variasi konten grid tanggal rendah, dan "bagian susah"-nya (date math) justru persis yang bakal dipaksa diulang konsumen kalau full headless.
+  - Compound minimal 2-part: `Calendar` (root — header nav prev/next/label + weekday row + grid, auto-render semua, gak dipecah jadi sub-part kayak `PaginationPrevious`/`PaginationNext` karena header nav bukan sesuatu yang independently reusable di luar konteks kalender ini — beda dari `PaginationLink` yang literally tombol nomor halaman standalone) dan `CalendarDay` (tombol sel tanggal, diexport + ada `.variants.ts` sendiri, dipakai default tapi bisa di-override penuh lewat `day` snippet di root — pola escape-hatch sama persis `Pagination`'s `item` snippet, termasuk keterbatasan yang sama: snippet override gak dapet click-wiring gratis, consumer pegang kendali penuh).
+  - **`type: 'single' | 'range'` discriminated union**, pola sama `Accordion`'s `type: 'single'|'multiple'` — `value` jadi `CalendarDate | undefined` atau `{ start, end }`. Dipilih di awal (dibahas sebelum mulai) atas permintaan, bukan default single-only.
+  - **Keyboard grid nav 2D dibikin lokal di `Calendar.svelte`, sengaja gak lewat `roving-focus.ts`** — primitive itu cuma linear 1D (`focusAdjacent(delta: 1|-1)`, gak ngerti konsep baris/kolom), konsisten disiplin "jangan generalize primitive sebelum consumer kedua bener-bener butuh" (sama kayak keputusan combobox soal virtual-focus). Arrow Left/Right (±1 hari), Up/Down (±7 hari), Home/End (awal/akhir minggu via `startOfWeek`/`endOfWeek`), PageUp/PageDown (±1 bulan) — subset APG Date Picker Grid pattern (Shift+PageUp/Down buat lompat tahun dan Ctrl+Home/End sengaja gak diikutin, dianggap enhancement opsional, sama semangat kayak `accordion` skip arrow-nav antar header).
+  - **Sel tanggal disabled (di luar `minValue`/`maxValue` atau `isDateDisabled`) pakai `aria-disabled`, bukan native `disabled` attribute** — beda dari kebiasaan lib ini (checkbox/button pakai native disabled). Alasan: native `disabled` bikin elemen gak bisa di-`focus()` sama sekali, padahal ARIA composite grid pattern minta sel di luar rentang tetap keyboard-reachable (arrow key tetap bisa lewatin, cuma gak bisa diaktifin) — kalau native disabled dipakai, arrow-key navigation bakal macet begitu nyampe sel disabled. Dicek eksplisit di test (`Calendar.svelte.spec.ts`: `hasAttribute('disabled')` harus `false`).
+  - **Nama hari (day-of-month) doang bukan accessible name yang cukup** — satu grid pasti ada sel bulan-sebelum/sesudah yang angkanya numpuk sama bulan aktif (mis. 29 Feb dan 29 Mar di baris yang sama). Tiap `CalendarDay` dikasih `aria-label` full-date (`DateFormatter` `dateStyle: 'full'`, mis. "Friday, March 15, 2024") biar accessible name-nya unik dan jelas konteks bulannya — teks visible tetep angka doang.
+  - Heading bulan/tahun (`aria-live="polite"`) dobel-fungsi sebagai `aria-labelledby` target buat `role="grid"` dan buat announce ganti bulan ke AT.
+  - `defaultMonth` prop (opsional) — kontrol bulan awal yang ditampilin pas gak ada `value` (atau `value.start` di mode range), independen dari tanggal hari ini.
+- [x] `date-picker` — selesai (2026-08-23), Tier 3. **Single component, bukan compound** — pola sama `Combobox` (bukan `Pagination`/`Table`), karena trigger+popup itu satu unit kohesif yang gak independently composable.
+  - **Trigger `<button>`, bukan `<input readonly>`** (keputusan disepakati sebelum mulai, atas permintaan) — semantik lebih jelas buat AT (gak ada ambiguitas readonly-input yang emang debatable di WAI-ARIA APG), dan `aria-haspopup`/`aria-expanded` + keyboard activation (Enter/Space) udah gratis dari native button. `aria-haspopup="grid"` (bukan `"dialog"`) karena konten popup-nya emang `role="grid"` (`Calendar`), bukan dialog beneran — popup-nya non-modal, gak pakai `focus-trap` (beda dari `Dialog`/`Drawer`), cuma `dismissable-layer` (Esc + outside-click), pola sama kayak `Combobox`/`Popover`/`Dropdown`.
+  - **Read-only di v1** — gak ada mode diketik manual/parsing freeform date string (keputusan disepakati sebelum mulai: parsing tanggal lintas locale/format itu rabbit hole mahal, gak sepadan buat v1). Nilai ditampilin lewat `DateFormatter` (`dateStyle: 'medium'`), bukan `.toString()` mentah.
+  - Reuse `Calendar` penuh (cross-import antar folder komponen publik, pola sama `BreadcrumbEllipsis`→`Popover`/`Combobox`→`Spinner`) — `DatePicker` sendiri gak punya date-math apa pun, cuma passthrough props + intercept `onValueChange` buat nutup popup pas seleksi kelar.
+  - **Close-on-select beda per mode**: single langsung nutup begitu satu tanggal dipilih; range tetep kebuka sampai `start` dan `end` lengkap (dua klik), baru auto-close — dan fokus balik ke trigger di kedua kasus (`closeAndFocusTrigger`, pola sama `Combobox`).
+  - **Jebakan yang ketemu & difix pas development**: awalnya `handleTriggerKeydown` niru pola `Combobox` yang nangani Enter/Space buat buka popup — ternyata bug, karena trigger di sini beneran `<button>` native (beda dari trigger `Combobox` yang `<div role="combobox">`). Native button udah nyintesis `click` event sendiri pas Enter/Space ditekan, jadi kalau keydown handler juga eksplisit set `open = true`, `onclick={toggleOpen}` yang jalan sesudahnya bakal langsung nutup lagi (toggle dari true balik ke false) — popup keliatan "kedip" doang. Fix: `handleTriggerKeydown` cuma nangani `ArrowDown` (yang emang gak ada native behavior-nya di button), Enter/Space dibiarin ke native click.
+  - `name` prop render hidden input(s) buat native form submission — single mode satu `<input type="hidden">` isi ISO string (`CalendarDate.toString()`), range mode dua input `${name}-start`/`${name}-end`, pola mirip `Combobox`'s hidden inputs tapi lebih simpel (gak perlu handle array multi-value).
+  - `labels`/`locale`/`minValue`/`maxValue`/`isDateDisabled`/`defaultMonth` full passthrough ke `Calendar` di dalam popup.
+
 ### Utilitas (`src/lib/utils/`)
 
 - [x] `cn.ts` — merge class
@@ -122,8 +143,8 @@ Semua selesai.
 
 ## Tier 3 — mahal, tunda
 
-- [ ] `calendar`
-- [ ] `date-picker`
+- [x] `calendar` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
+- [x] `date-picker` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
 - [ ] `command` (command palette)
 - [ ] `data-table` (sorting / filtering / selection) — keputusan arsitektur udah disepakati (2026-08-23), sebelum mulai dikerjain: **konsumen yang manggil `createSvelteTable()` sendiri** (bikin instance-nya sendiri, define `ColumnDef`/sort-fn/dst di kode mereka), komponen kita cuma thin renderer di atas part-part `table` — pake `flexRender` buat render header/cell yang instance-nya udah punya. Bukan komponen yang manggil `createSvelteTable()` internal. Alasan: (1) konsisten sama alasan `@tanstack/svelte-table` dijadiin `peerDependencies` (optional, udah diinstall — lihat `package.json`) bukan `dependencies` biasa, konsumen butuh akses instance langsung; (2) sama pola kayak shadcn-svelte punya `data-table` recipe; (3) tetep semi-headless, komponen gak jadi state-owner berat — sama disiplin "consumer full control" kayak async di `combobox`. Row selection nanti reuse `Checkbox` yang udah ada, pagination nanti pairing sama komponen `pagination` (Tier 2) kalau udah ada. Filtering kemungkinan gak dibakein UI, cuma didokumentasiin polanya (UI filter beda-beda banget per app).
 - [ ] `carousel`
@@ -149,7 +170,8 @@ Semua selesai.
 13. ~~`combobox`~~ — selesai (2026-08-23), di luar giliran (Tier 2, diprioritasin atas permintaan, di-port dari implementasi existing di project lain). Lihat catatan detail di daftar komponen selesai (bagian Form) di atas.
 14. ~~`table`~~ — selesai (2026-08-23), sesuai urutan Tier 2. Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 15. ~~`pagination`~~ — selesai (2026-08-23), di luar giliran (atas permintaan, biasanya `empty-state` duluan sesuai urutan Tier 2). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
-16. ~~`empty-state`~~ — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 2 tuntas semua.** ← next: Tier 3 (`data-table` keputusan arsitekturnya udah disepakati, lihat catatan di atas; sisanya — `calendar`/`date-picker`/`command`/`carousel`/`tree`/`resizable` — belum dibahas)
+16. ~~`empty-state`~~ — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 2 tuntas semua.**
+17. ~~`calendar`~~ + ~~`date-picker`~~ — selesai (2026-08-23), di luar giliran Tier 3 (diprioritasin atas permintaan sebelum `data-table`/`command`/dst). Dependency baru `@internationalized/date` ditambah khusus buat ini. Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas. ← next: sisa Tier 3 (`data-table` keputusan arsitekturnya udah disepakati, lihat catatan di atas; `command`/`carousel`/`tree`/`resizable` belum dibahas)
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
 
