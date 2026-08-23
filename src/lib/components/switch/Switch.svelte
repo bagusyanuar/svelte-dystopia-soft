@@ -27,7 +27,7 @@
 		bind:checked
 		{disabled}
 		class={cn(
-			'peer absolute inset-0 size-full cursor-pointer appearance-none rounded-full border border-border bg-surface-subtle transition-colors duration-150 group-data-[invalid]:border-danger-border checked:border-primary checked:bg-primary hover:bg-surface-hover checked:hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none group-data-[invalid]:focus-visible:ring-danger disabled:cursor-not-allowed',
+			'peer absolute inset-0 size-full cursor-pointer appearance-none rounded-full border border-border bg-surface-subtle transition-colors duration-150 group-data-invalid:border-danger-border checked:border-primary checked:bg-primary hover:bg-surface-hover checked:hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none group-data-invalid:focus-visible:ring-danger disabled:cursor-not-allowed',
 			classes?.input
 		)}
 		{...restProps}

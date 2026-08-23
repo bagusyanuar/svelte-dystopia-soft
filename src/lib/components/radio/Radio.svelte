@@ -28,7 +28,7 @@
 		{value}
 		{disabled}
 		class={cn(
-			'peer absolute inset-0 size-full cursor-pointer appearance-none rounded-full border border-border bg-surface transition-colors duration-150 group-data-[invalid]:border-danger-border checked:border-primary hover:border-border-hover checked:hover:border-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none group-data-[invalid]:focus-visible:ring-danger disabled:cursor-not-allowed',
+			'peer absolute inset-0 size-full cursor-pointer appearance-none rounded-full border border-border bg-surface transition-colors duration-150 group-data-invalid:border-danger-border checked:border-primary hover:border-border-hover checked:hover:border-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none group-data-invalid:focus-visible:ring-danger disabled:cursor-not-allowed',
 			classes?.input
 		)}
 		{...restProps}
