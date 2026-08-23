@@ -2,11 +2,11 @@
 
 Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
 
-Terakhir diperbarui: 2026-08-23 (`toast` selesai)
+Terakhir diperbarui: 2026-08-23 (`breadcrumb` selesai)
 
 ---
 
-## Sudah selesai (25 komponen)
+## Sudah selesai (33 komponen)
 
 Semua sudah punya `index.ts` sebagai public entry point.
 
@@ -21,6 +21,8 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `slider`
 - [x] `label`
 - [x] `helper-text`
+- [x] `select` — native `<select>`, bukan custom listbox. Chevron up-down icon (dekoratif, `pointer-events-none`) overlay di kanan, `appearance-none` buat matiin native chrome. Sengaja gak pakai `floating`/`roving-focus`/`id` — native select udah dapet keyboard nav, typeahead, dan popup listbox gratis dari browser, jadi primitive itu gak relevan buat komponen ini (beda dari asumsi awal di Tier 1). Lihat catatan "Kenapa `select` native, bukan custom listbox" di bawah.
+- [x] `tabs` — compound component (`Tabs`/`TabsList`/`TabsTrigger`/`TabsContent`), state (`value`, bindable) di-share lewat Svelte context (`tabs-context.ts`, internal, gak diexport). Pakai `roving-focus` (automatic activation — panah gerakin fokus sekaligus milih tab, beda dari `dropdown` yang fokus/pilih dua langkah terpisah) dan `id` (`idFor` buat pasangan `aria-controls`/`aria-labelledby` per tab-panel). Tab disabled otomatis ke-skip dari roving set (query selector `:not(:disabled)`, sama pola kayak `dropdown`). Panel non-aktif gak dirender sama sekali (`{#if selected}`), bukan disembunyiin lewat CSS.
 
 ### Overlay
 
@@ -29,6 +31,9 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `tooltip`
 - [x] `hover-card`
 - [x] `dialog` — konsumen pertama `focus-trap` + `scroll-lock`. Enter/exit animation default (`components`-layer, lihat catatan di bawah), overridable lewat `classes`.
+- [x] `breadcrumb` — compound 7-part, tanpa primitive baru. `Breadcrumb` (`<nav aria-label="breadcrumb">`), `BreadcrumbList` (`<ol>`), `BreadcrumbItem` (`<li>`), `BreadcrumbLink` (`<a>`, pakai pola `child` snippet buat router-link composability — sama pola kayak `Button`), `BreadcrumbPage` (`<span aria-current="page">`, bukan link — representasi halaman sekarang), `BreadcrumbSeparator` (`<li role="presentation" aria-hidden="true">`, chevron default, override lewat `children`). Separator dibungkus `<li>` — bukan teks lepas di antara item — biar `<ol>` tetep valid HTML (cuma boleh `<li>` sebagai direct child).
+- [x] `BreadcrumbEllipsis` — tambahan nyusul (2026-08-23), buat kasus responsive/collapsed breadcrumb. Bukan komponen baru dari nol — cuma bungkus `Popover` yang udah ada (reuse penuh: floating, dismissable-layer, portal, presence), trigger-nya di-restyle jadi tombol ikon kecil ("⋯") lewat override `classes.trigger`/`classes.content` (tailwind-merge dedupe otomatis nge-replace `h-10`/`border`/`px-control-x` bawaan `Popover` tanpa perlu ubah `Popover` sendiri). Konten popover-nya headless total — konsumen isi sendiri list `BreadcrumbLink` yang collapsed, gak ada struktur wajib. Gak butuh compound part sendiri (bukan `<li>` — sejajar sama `BreadcrumbLink`/`BreadcrumbPage`, ditaro di dalam `BreadcrumbItem` sama kayak keduanya).
+- [x] `drawer` — panel edge-anchored (`side`: `right` default/`left`/`top`/`bottom`), reuse primitive yang sama kayak `dialog` (`focus-trap`, `scroll-lock`, `dismissable-layer`, `portal`, `createPresence`, `createIds`). Beda dari `dialog`: gak butuh wrapper terpisah buat `portal`+`focus-trap` — posisinya lewat `inset-*` (bukan transform buat centering), jadi dua action itu aman langsung di elemen content yang sama. Overlay-nya reuse animation `dialog-overlay` yang udah ada (`data-slot='dialog-overlay'`, gak bikin token baru) karena perannya identik (scrim dim). Content dapet keyframe baru per sisi (4 arah × in/out = 8) di `index.css`, dikunci ke `data-slot='drawer-content'` + `data-side`. Radius & border cuma di sisi yang "ke dalam" (misal `side=right` → `rounded-l-lg border-l` doang, 3 sisi lain flush ke tepi viewport). Wrapper `children` dikasih `flex-1 min-h-0` biar pola "header tetap, footer nempel bawah" ala konsumen (`flex h-full flex-col justify-between` di children mereka) kepakai — sempet ketauan salah pas screenshot-testing manual: percobaan pertama pake `flex-1` di wrapper konsumen gak ngefek karena parent-nya bukan flex container, baru bener pas ganti `h-full`.
 
 ### Aksi & tampilan
 
@@ -40,9 +45,13 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `skeleton`
 - [x] `progress`
 - [x] `collapsible`
+- [x] `accordion` — grouping di atas `collapsible`'s trigger/content markup, `type="single"` (default, satu item kebuka, klik item aktif nutup lagi) atau `type="multiple"` (`value` jadi `string[]`, saling independen), `value` bindable, tipe di-diskriminasi lewat `type` (`string` buat single, `string[]` buat multiple) jadi konsumen gak bisa salah pasang. State di-share ke `AccordionItem` lewat Svelte context internal (`accordion-context.ts`, sama pola kayak `tabs-context.ts`, gak diexport). Item disabled gak toggle (native `disabled` attribute udah cukup, gak perlu guard manual). Root `overflow-hidden` biar hover-bg trigger item pertama/terakhir gak nembus keluar sudut `rounded-lg`.
 - [x] `typography`
+- [x] `spinner` — tanpa dependensi. `role="status"` + `aria-label` (bukan visually-hidden text di dalam — role `status` cuma nge-compute accessible name dari `aria-label`/`aria-labelledby`, "name from content" gak berlaku buat role ini, sempet salah asumsi pas nulis test pertama kali dan test-nya gagal karena itu). Default label "Loading" (fallback `??`, sama pola kayak `labels` di `PasswordField`), `label=""` buat suppress kalau parent (mis. button `aria-busy`) udah announce sendiri. Ikon `animate-spin` inherit `currentColor`, sengaja gak dikasih warna default biar otomatis ngikutin warna teks parent (sama kayak spinner inline yang udah ada di `Button`) — konsumen kasih warna lewat `class`/`classes.icon` kalau dipakai berdiri sendiri.
 - [x] `alert` — box notifikasi statis, bukan overlay (tanpa portal/presence/primitive apa pun). Variant `default`/`danger`/`warning`/`success`, `role="alert"`.
 - [x] `toast` — API imperatif (`toast.message/success/warning/danger(title, options)`) + komponen `<Toaster />` yang dipasang sekali di root. Store singleton module-level (`toast-store.svelte.ts`), viewport portalled, posisi 6-corner (default `bottom-right`), max 3 visible dengan sisanya nunggu giliran (bukan dibuang), auto-dismiss 5 detik dengan pause-on-hover, pakai `portal` + `createPresence` yang sudah ada. Lihat catatan "Keputusan API `toast`" di bawah untuk detail.
+- [x] `separator` — tanpa dependensi. `<div role="separator">` (bukan `<hr>`, biar satu komponen nutup horizontal & vertical — HTML gak punya elemen native buat separator vertical). Default `decorative={true}` (gak ada `role`/`aria-orientation` sama sekali, murni visual); `decorative={false}` baru expose `role="separator"` + `aria-orientation` buat AT, sesuai WAI-ARIA (separator dekoratif seharusnya gak masuk accessibility tree).
+- [x] `avatar` — tanpa dependensi, single component (bukan compound `Avatar`/`AvatarImage`/`AvatarFallback` ala Radix) — image/fallback di sini bukan bagian yang independently composable, jadi gak butuh full compound treatment (lihat skill `headless-composition`). `children` snippet dobel fungsi jadi konten fallback (inisial/ikon), ditampilin selama gambar belum ke-load, gagal, atau `src` kosong. Status loading dilacak internal (`loading`/`loaded`/`error`) via `onload`/`onerror` di `<img>`; `$effect` reset status pas `src` prop berubah (dijustifikasi sebagai sinkronisasi ke lifecycle async gambar, bukan derivasi nilai murni — lihat skill `svelte5-best-practices`). Gak ada size variant/`cva` — cuma default `size-10`, size lain via override `class` (`cn()` udah nge-dedupe), gak ada named role spacing yang cocok buat dijadiin scale formal.
 
 ### Utilitas (`src/lib/utils/`)
 
@@ -64,30 +73,23 @@ Primitive yang tadinya jadi prasyarat Tier 1 sudah dibuat semua, masing-masing d
 `Popover` dan `Dropdown` sudah direfactor untuk pakai `dismissable-layer` (keduanya) dan `roving-focus` (`Dropdown`) — logika yang tadinya duplikat sekarang satu sumber.
 Semua 5 primitive sekarang punya minimal satu consumer nyata lewat `dialog`.
 
-- [x] `focus-trap` — dipakai `dialog`. Masih relevan buat: drawer, sheet
-- [x] `scroll-lock` — dipakai `dialog`. Masih relevan buat: drawer
-- [x] `dismissable-layer` — Esc + click-outside + stacking. Dipakai `popover`, `dropdown`, `dialog`.
-- [x] `roving-focus` — navigasi panah + typeahead. Dipakai `dropdown`; tabs/select/combobox/menubar/radio group tinggal pakai.
-- [x] `id` — `createIds`/`idFor` untuk `aria-labelledby` / `aria-controls`. Dipakai `dialog`; masih relevan buat: tabs, accordion
+- [x] `focus-trap` — dipakai `dialog`, `drawer`.
+- [x] `scroll-lock` — dipakai `dialog`, `drawer`.
+- [x] `dismissable-layer` — Esc + click-outside + stacking. Dipakai `popover`, `dropdown`, `dialog`, `drawer`.
+- [x] `roving-focus` — navigasi panah + typeahead. Dipakai `dropdown`, `tabs`; combobox/menubar/radio group tinggal pakai. (`select` ternyata gak butuh — native `<select>` udah punya keyboard nav sendiri, lihat catatan `select` di atas.)
+- [x] `id` — `createIds`/`idFor` untuk `aria-labelledby` / `aria-controls`. Dipakai `dialog`, `tabs`, `accordion`.
 
 ---
 
 ## Tier 1 — hampir semua aplikasi butuh
 
-- [ ] `select` — lubang terbesar di form. Primitive siap: floating, roving-focus, id. Masih butuh: typeahead khusus form-value
-- [ ] `tabs` — navigasi paling umum. Primitive siap: roving-focus, id
-- [ ] `separator` — sepele, sering dipakai. Tanpa dependensi
-- [ ] `avatar` — tanpa dependensi
+Semua selesai.
 
 ## Tier 2
 
-- [ ] `accordion` — `collapsible` sudah ada, tapi grouping + mode single/multiple belum
-- [ ] `drawer` / `sheet` — berbagi primitive dengan dialog (focus-trap, scroll-lock, dismissable-layer sudah terbukti jalan di sana). Bisa contek pola centering-lewat-wrapper dari `dialog` juga.
 - [ ] `combobox` / `autocomplete`
 - [ ] `table`
 - [ ] `pagination`
-- [ ] `breadcrumb`
-- [ ] `spinner`
 - [ ] `empty-state`
 
 ## Tier 3 — mahal, tunda
@@ -108,8 +110,14 @@ Semua 5 primitive sekarang punya minimal satu consumer nyata lewat `dialog`.
 2. ~~`dialog`~~ — selesai. Primitive tervalidasi lewat consumer nyata; pola default-animation + centering-lewat-wrapper siap dicontek komponen overlay berikutnya.
 3. ~~Batch murah — `alert`~~ — selesai, plus token `warning`/`success` baru ditambah ke theme (lihat catatan di bawah). Sisa batch murah: `separator`, `avatar`, `spinner`. ← next
 4. ~~`toast`~~ — selesai duluan dari urutan awal (di luar giliran, atas permintaan) — polanya beda dari komponen lain (store singleton + API imperatif), lihat catatan di bawah.
-5. **`tabs`** lalu **`accordion`** — tinggal pakai `roving-focus` + `id` yang sudah ada.
-6. **`select`** — paling berat di Tier 1 yang tersisa.
+5. ~~`select`~~ — selesai (2026-08-23), di luar giliran (dikerjakan sebelum `tabs` atas permintaan). Ternyata jauh lebih murah dari estimasi awal — native `<select>`, bukan custom listbox, jadi gak kena beban `floating`/`roving-focus`/`id`.
+6. ~~`tabs`~~ — selesai (2026-08-23). Pakai `roving-focus` + `id` persis sesuai rencana.
+7. ~~`separator`~~ — selesai (2026-08-23), di luar giliran (batch murah, sebelum `accordion`). Tanpa primitive, sesuai rencana.
+8. ~~`avatar`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Tanpa primitive, sesuai rencana. Tier 1 sekarang tuntas semua.
+9. ~~`accordion`~~ — selesai (2026-08-23). Pakai `id` (`idFor` per-item, `aria-controls`/`aria-labelledby`-style association) — `roving-focus` sengaja gak dipakai, arrow-key nav antar header itu enhancement opsional di APG, bukan wajib (Enter/Space via native `<button>` udah cukup).
+10. ~~`spinner`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Tanpa primitive.
+11. ~~`drawer`~~ — selesai (2026-08-23), atas permintaan. Semua primitive tervalidasi lewat `dialog`, sesuai rencana. Bug ketemu pas testing manual: overlay `dialog-overlay-out` (150ms) kelar duluan sebelum content `drawer-content-out-*` (200ms), tanpa `animation-fill-mode: forwards` overlay-nya snap balik opaque sebelum akhirnya unmount — keliatan kayak flicker. Fix: tambah `forwards` ke semua token `--animate-*` di `index.css` (dialog, drawer, toast — bukan cuma drawer, biar gak kejadian lagi kalau ada durasi mismatch lain nanti). Lihat catatan "animation-fill-mode" di bawah.
+12. ~~`breadcrumb`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Compound 6-part (`Breadcrumb`/`BreadcrumbList`/`BreadcrumbItem`/`BreadcrumbLink`/`BreadcrumbPage`/`BreadcrumbSeparator`), tanpa primitive. `BreadcrumbLink` pakai pola `child` snippet (asChild-equivalent) buat router-link composability. ← next: `combobox`, atau sisa Tier 2 (`table`/`pagination`/`empty-state`)
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
 
@@ -182,6 +190,22 @@ Bedanya sama radius/shadow: token spacing di atas **belum dipakai komponen manap
 ---
 
 ## Catatan terbuka
+
+### `animation-fill-mode: forwards` — wajib di semua exit animation `data-slot`
+
+Ketemu pas testing manual `drawer` (2026-08-23): overlay-nya pakai animation `dialog-overlay-out` (150ms, di-reuse dari `dialog`), sementara content-nya pakai `drawer-content-out-*` (200ms). `createPresence` cuma nunggu animasi **content** kelar buat unmount block (lihat `presence.svelte.ts` — `node.getAnimations()` cuma dipanggil di node yang di-track, overlay gak di-track terpisah). Tanpa `animation-fill-mode: forwards`, begitu animasi overlay-nya kelar duluan di 150ms, elemen itu **snap balik ke state sebelum animasi** (opacity 1, full keliatan lagi) karena gak ada apa pun yang nahan di keyframe akhir — ada jeda ~50ms overlay tiba-tiba full opaque lagi sebelum akhirnya ke-unmount bareng content di 200ms. Efeknya keliatan kayak flicker pas exit.
+
+`dialog` sendiri gak pernah kena bug ini karena overlay & content-nya durasinya sama-sama 150ms — dua animasi kelar bersamaan, jadi jeda revert-nya gak sempat ke-paint. Begitu `drawer` bikin overlay & content punya durasi beda, bug-nya baru kelihatan.
+
+Fix: tambah `forwards` ke **semua** token `--animate-*` di `index.css` (dialog overlay/content, drawer per-sisi, toast) — bukan cuma yang kepake drawer, karena kelas bug ini bisa muncul lagi kapan aja ada dua animasi terkait (overlay + content) dengan durasi beda, sekarang atau nanti. Kalau bikin animasi `data-slot` baru buat komponen lain, selalu sertain `forwards` di token `--animate-*`-nya dari awal — jangan nunggu ketauan lewat bug report.
+
+### Kenapa `select` native, bukan custom listbox
+
+Deskripsi awal di Tier 1 nyebut `select` bakal butuh `floating`/`roving-focus`/`id` (asumsi custom combobox-style listbox kayak `Dropdown`). Keputusan aktual (2026-08-23): pakai `<select>` native langsung, cuma dibungkus wrapper buat naruh chevron up-down icon (dekoratif, `pointer-events-none`, posisi `absolute` di kanan) — bukan custom popup.
+
+Alasan: native select dapet keyboard nav, typeahead, dan popup listbox gratis dari browser dan platform assistive tech, sesuai prinsip skill `accessibility` ("prefer a native element whenever one exists"). Konsumen supply `<option>`/`<optgroup>` sendiri lewat `children` snippet — sama kayak native `<select>` biasa, cuma di-style ulang (`appearance-none` + token density/radius sama kayak `TextField`).
+
+**Trade-off yang diterima**: gak ada custom item rendering (icon per-option, dll) — itu ranah `combobox`/`autocomplete` di Tier 2, bukan `select`. Kalau nanti ada kebutuhan konkret buat combobox-style select (search-as-you-type, custom option markup), itu komponen terpisah yang baru akan pakai `floating`/`roving-focus`/`id`, bukan revisi `select` ini.
 
 ### Token `warning`/`success` — baru ditambah, tersedia buat komponen lain
 
