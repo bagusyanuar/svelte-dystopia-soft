@@ -5,6 +5,7 @@ import {
 	offset,
 	shift,
 	arrow,
+	size,
 	type Placement,
 	type Strategy,
 	type Middleware
@@ -17,6 +18,10 @@ export interface FloatingOptions {
 	strategy?: Strategy;
 	offset?: number;
 	arrowEl?: HTMLElement | null;
+	/** Pins the floating element's min-width to the reference's width (e.g. a combobox popup matching its trigger). */
+	matchReferenceWidth?: boolean;
+	/** Caps the floating element's max-height to the lesser of this and the space actually available in the viewport. */
+	maxHeight?: number;
 	onComputed?: (position: { x: number; y: number }) => void;
 }
 
@@ -43,6 +48,22 @@ export const floating: Action<HTMLElement, FloatingOptions> = (node, options) =>
 		if (opts.arrowEl) {
 			// Keeps the arrow off the content box's rounded corners on small bubbles.
 			middleware.push(arrow({ element: opts.arrowEl, padding: 4 }));
+		}
+
+		if (opts.matchReferenceWidth || opts.maxHeight != null) {
+			middleware.push(
+				size({
+					padding: 8,
+					apply({ rects, availableHeight, elements }) {
+						if (opts.matchReferenceWidth) {
+							elements.floating.style.minWidth = `${rects.reference.width}px`;
+						}
+						if (opts.maxHeight != null) {
+							elements.floating.style.maxHeight = `${Math.min(availableHeight, opts.maxHeight)}px`;
+						}
+					}
+				})
+			);
 		}
 
 		async function update() {

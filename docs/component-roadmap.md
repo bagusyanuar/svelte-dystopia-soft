@@ -2,11 +2,11 @@
 
 Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
 
-Terakhir diperbarui: 2026-08-23 (`breadcrumb` selesai)
+Terakhir diperbarui: 2026-08-23 (`empty-state` selesai — Tier 2 tuntas)
 
 ---
 
-## Sudah selesai (33 komponen)
+## Sudah selesai (37 komponen)
 
 Semua sudah punya `index.ts` sebagai public entry point.
 
@@ -23,6 +23,15 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `helper-text`
 - [x] `select` — native `<select>`, bukan custom listbox. Chevron up-down icon (dekoratif, `pointer-events-none`) overlay di kanan, `appearance-none` buat matiin native chrome. Sengaja gak pakai `floating`/`roving-focus`/`id` — native select udah dapet keyboard nav, typeahead, dan popup listbox gratis dari browser, jadi primitive itu gak relevan buat komponen ini (beda dari asumsi awal di Tier 1). Lihat catatan "Kenapa `select` native, bukan custom listbox" di bawah.
 - [x] `tabs` — compound component (`Tabs`/`TabsList`/`TabsTrigger`/`TabsContent`), state (`value`, bindable) di-share lewat Svelte context (`tabs-context.ts`, internal, gak diexport). Pakai `roving-focus` (automatic activation — panah gerakin fokus sekaligus milih tab, beda dari `dropdown` yang fokus/pilih dua langkah terpisah) dan `id` (`idFor` buat pasangan `aria-controls`/`aria-labelledby` per tab-panel). Tab disabled otomatis ke-skip dari roving set (query selector `:not(:disabled)`, sama pola kayak `dropdown`). Panel non-aktif gak dirender sama sekali (`{#if selected}`), bukan disembunyiin lewat CSS.
+- [x] `combobox` — di luar giliran (2026-08-23, Tier 2, diprioritasin atas permintaan). Port dari implementasi existing di project lain (`ubh-opex-frontend`), full feature parity (single/multi-select dengan chip, grouping, skeleton loading, error+retry, clearable, prefix, keywords, highlight match) — bukan v1 yang di-trim. Logic-nya (state class, filter, keyboard map, debounce) diport hampir apa adanya; plumbing-nya diadaptasi penuh ke primitive lib ini. Poin penting:
+  - **Async tetap konsumen-kontrol penuh** — komponen cuma debounce (`searchDebounce` prop) sebelum manggil `onSearchChange`. Gak ada Promise/race-guard di dalam komponen — fetch/cache/race itu tanggung jawab konsumen (`search` bindable dipakai sebagai query key ke data layer mereka sendiri, `manualFilter` buat skip local-filter kalau data udah difilter server-side). Ini keputusan sadar, nolak alternatif "built-in Promise + race-guard token" yang sempet dibahas duluan.
+  - **`floating.ts` dapet extension baru** (opt-in, non-breaking): `matchReferenceWidth`/`maxHeight` yang push middleware `size()` dari `@floating-ui/dom` — dipakai buat popup combobox match-width ke trigger dan clamp tinggi ke viewport. Consumer lain (`Popover`/`Dropdown`/`Tooltip`/`HoverCard`) gak kepengaruh karena defaultnya `undefined`.
+  - **Gak ada default animation** — beda dari `dialog`/`toast`/`drawer`, combobox nyamain `dropdown`/`popover` (gak ada entry baru di `@layer components`). `data-slot='combobox-content'` + `data-state` tetep ada buat consumer hook animation sendiri lewat `classes.content`, `createPresence` tetep nunda unmount kalau mereka pasang animasi.
+  - **Virtual focus (`aria-activedescendant`) sengaja gak masuk `roving-focus.ts`** — primitive itu mindahin fokus DOM beneran (dipake `dropdown`/`tabs`), sedangkan combobox fokusnya harus tetep di `<input>` terus (fokus ke option cuma virtual). Logic index/highlight-nya lokal di `combobox-state.svelte.ts` aja, konsisten sama disiplin "jangan generalize primitive sebelum ada consumer kedua yang beneran butuh".
+  - **Komponen generic pertama di lib ini** — `<script generics="T extends ComboboxValue">`, beda dari `select`/`dropdown` yang untyped value. `ComboboxValue = string | number`.
+  - Loading indicator di search-row reuse komponen `Spinner` yang udah ada (`label=""` biar gak dobel announcement) — cross-import pertama antar folder komponen publik di lib ini.
+  - Fix a11y dibanding source aslinya: source-nya hardcode `aria-label` bahasa Inggris ("Remove {label}", "Clear selection") — pelanggaran langsung skill `accessibility`. Semua string user-facing dikonsolidasi ke satu prop `labels` (pola sama kayak `PasswordField.labels`), termasuk `removeChip` sebagai function `(label) => string` biar tetep bisa di-interpolate pas di-localize.
+  - **`onEndReached`** — nyusul (2026-08-23, atas permintaan, sebelum source aslinya gak punya ini sama sekali). Infinite-scroll hook buat mode async: komponen cuma nge-signal (scroll-threshold di listbox, 48px dari bawah, di-guard biar gak fire berkali-kali selagi masih di halaman yang sama), gak fetch/merge/track page sendiri — konsisten sama filosofi `onSearchChange`. Guard-nya (`endReachedFired`) di-reset via `$effect` yang nonton `options`/`loading`, jadi re-arm otomatis begitu halaman baru landing (options berubah) atau `loading` balik ke `false` (termasuk kasus consumer yang gak pernah nyalain `loading` buat pagination-nya). Sample penggunaan real (single query dan paginated) pakai `@tanstack/svelte-query` ditulis sebagai doc-comment di `Combobox.stories.svelte` (bukan story yang beneran jalan — sengaja gak nambah `@tanstack/svelte-query` sebagai dependency cuma buat demo).
 
 ### Overlay
 
@@ -52,6 +61,23 @@ Semua sudah punya `index.ts` sebagai public entry point.
 - [x] `toast` — API imperatif (`toast.message/success/warning/danger(title, options)`) + komponen `<Toaster />` yang dipasang sekali di root. Store singleton module-level (`toast-store.svelte.ts`), viewport portalled, posisi 6-corner (default `bottom-right`), max 3 visible dengan sisanya nunggu giliran (bukan dibuang), auto-dismiss 5 detik dengan pause-on-hover, pakai `portal` + `createPresence` yang sudah ada. Lihat catatan "Keputusan API `toast`" di bawah untuk detail.
 - [x] `separator` — tanpa dependensi. `<div role="separator">` (bukan `<hr>`, biar satu komponen nutup horizontal & vertical — HTML gak punya elemen native buat separator vertical). Default `decorative={true}` (gak ada `role`/`aria-orientation` sama sekali, murni visual); `decorative={false}` baru expose `role="separator"` + `aria-orientation` buat AT, sesuai WAI-ARIA (separator dekoratif seharusnya gak masuk accessibility tree).
 - [x] `avatar` — tanpa dependensi, single component (bukan compound `Avatar`/`AvatarImage`/`AvatarFallback` ala Radix) — image/fallback di sini bukan bagian yang independently composable, jadi gak butuh full compound treatment (lihat skill `headless-composition`). `children` snippet dobel fungsi jadi konten fallback (inisial/ikon), ditampilin selama gambar belum ke-load, gagal, atau `src` kosong. Status loading dilacak internal (`loading`/`loaded`/`error`) via `onload`/`onerror` di `<img>`; `$effect` reset status pas `src` prop berubah (dijustifikasi sebagai sinkronisasi ke lifecycle async gambar, bukan derivasi nilai murni — lihat skill `svelte5-best-practices`). Gak ada size variant/`cva` — cuma default `size-10`, size lain via override `class` (`cn()` udah nge-dedupe), gak ada named role spacing yang cocok buat dijadiin scale formal.
+
+### Data display
+
+- [x] `table` — selesai (2026-08-23), Tier 2. Compound 8-part (`Table`/`TableHeader`/`TableBody`/`TableFooter`/`TableRow`/`TableHead`/`TableCell`/`TableCaption`), murni presentational — gak ada `$state`, gak ada context share antar-part (beda dari `Tabs`/`Accordion` yang emang butuh context karena state-nya lintas-part; di sini tiap part independen, konsumen loop data sendiri lewat `{#each}`), gak ada primitive. Prasyarat buat `data-table` (Tier 3) — part-part ini bakal langsung dipakai ulang di sana lewat `flexRender`.
+  - `class` di root `Table` jatuh ke wrapper scroll (`<div class="overflow-x-auto">`), bukan elemen `<table>` — pola yang sama kayak `Select` (`class` ke wrapper, `classes.select` ke elemen native). Buat `Table`, elemen native-nya dapet `classes.table`.
+  - `TableRow` punya prop `selected` (boolean, murni presentational — cuma toggle `data-selected` attribute + background) buat disambungin ke selection state konsumen sendiri nanti (mis. dari `row.getIsSelected()` punya TanStack Table). Gak ada primitive/state internal apa pun buat ini.
+  - `TableHead` default `scope="col"`, overridable (`scope="row"` buat row header) karena `scope` ada di destructure `restProps`, bukan di-hardcode tanpa jalan keluar.
+  - Padding sel (`TableHead`/`TableCell`) pake `px-compact py-2` — persis kombo yang sama kayak `DropdownItem` (role "dense rows" cocok buat cell tabel, `py-2` dibiarin literal karena gak ada token yang match peran "padding vertikal", sama disiplin kayak keputusan `dropdown` kemarin).
+  - Sengaja **gak** pakai arbitrary Tailwind selector (`[&_tr]`, `:has([role=checkbox])`) yang lazim di implementasi Table ala shadcn — border taro langsung di tiap `TableRow`/`TableHeader`/`TableFooter`, dan gak ada preemptive styling buat checkbox column `data-table` yang belum ada. Konsisten sama disiplin "jangan desain buat kebutuhan hipotetis" — nanti ditambah kalau `data-table` beneran butuh.
+- [x] `pagination` — selesai (2026-08-23), Tier 2, di luar giliran (atas permintaan, sebelum `pagination` giliran normalnya setelah `table`). **Semi-headless, beda dari `table` yang full headless** — keputusan sadar (dibahas dulu sebelum mulai): variasi konten pagination rendah (nomor + "…" + arrow doang, gak kayak variasi cell `table` yang liar), dan "bagian susah"-nya (algoritma ellipsis) justru persis hal yang bakal dipaksa diulang konsumen kalau full headless — jadi di-bake defaultnya, bukan di-headless-in.
+  - **`src/lib/utils/pagination-range.ts`** — pure function `getPaginationRange({ currentPage, totalPages, siblingCount, boundaryCount })`, return `(number | 'ellipsis')[]`. Gak jalan lewat conditional-math ala MUI (`usePagination`, terkenal padat/susah diverifikasi bener di edge case) — bikin "wanted" `Set` dulu (boundary pages + pages di sekitar current), terus walk 1..N sekali sambil nyisipin `'ellipsis'` tiap ada gap. Lebih gampang diverifikasi bener di edge case (`totalPages` kecil, current di ujung). Ada spec sendiri (`pagination-range.spec.ts`, pola sama kayak `id.spec.ts` — pure logic, bukan `.svelte.spec.ts`).
+  - **Compound 7-part**: `Pagination` (root `<nav>`, orchestrator — manggil `getPaginationRange` internal terus render default `PaginationList`/`PaginationItem`/`PaginationLink`/`PaginationEllipsis` otomatis), `PaginationList` (`<ul>`), `PaginationItem` (`<li>`), `PaginationLink` (tombol nomor halaman, `active` prop → `aria-current="page"` + `data-active`, pola `child` snippet buat router-link composability kayak `BreadcrumbLink`), `PaginationEllipsis` (`aria-hidden`, "…" doang — gak ada sr-only text di dalamnya karena percuma, wrapper udah `aria-hidden`, sama disiplin kayak `BreadcrumbSeparator`), `PaginationPrevious`/`PaginationNext` (tombol chevron+teks, accessible name dari visible text langsung — gak perlu `aria-label` terpisah).
+  - **Pertama kalinya root component nge-import & auto-render sibling compound part-nya sendiri** — beda dari `Tabs`/`Breadcrumb`/`Table` yang semua part-nya dirakit manual sama konsumen. Tapi semua part tetep diexport publik di `index.ts` — escape hatch buat yang mau assembly manual/custom (mis. custom icon per halaman) tetep ada.
+  - Escape hatch tambahan: prop `item` (snippet override per nomor halaman, pola sama kayak `item` snippet combobox) — cuma berlaku ke nomor halaman, gak ke ellipsis/previous/next.
+  - `currentPage` bindable + `onPageChange` callback — pola sama persis kayak `value`/`onValueChange` combobox.
+  - `labels` terstruktur (`nav`/`previous`/`next`/`page` function) — gak ada hardcode English tanpa override, termasuk `nav` yang notabene `Breadcrumb` sendiri hardcode `aria-label="breadcrumb"` tanpa override (`Pagination` sengaja lebih ketat ngikutin skill `accessibility`).
+- [x] `empty-state` — selesai (2026-08-23), Tier 2, tuntas. Single component (bukan compound) — sama kelasnya kayak `alert`, variance layout-nya rendah (icon-title-description-action, satu bentuk yang dipakai hampir semua app), gak ada alasan buat full compound treatment. Struktur & prop shape literally nyontek `alert` (`icon`/`title`/`description` snippet + `children` buat action, `classes` terstruktur per-part) — bedanya: layout `flex-col items-center text-center` (bukan horizontal kayak alert), gak ada `variant`/border/background default (biar gak nested-double-border kalau ditaro di dalam `Card`/`Table`/container lain yang udah punya border sendiri — liat story "Inside a table"), icon lebih besar (`size-10`, ikon ilustrasi bukan ikon kecil notifikasi), `role="status"` (bukan `role="alert"` — live region polite, buat kasus umum "hasil search/filter jadi kosong" yang wajar di-announce ke AT tapi gak urgent, beda dari alert yang assertive).
 
 ### Utilitas (`src/lib/utils/`)
 
@@ -87,17 +113,19 @@ Semua selesai.
 
 ## Tier 2
 
-- [ ] `combobox` / `autocomplete`
-- [ ] `table`
-- [ ] `pagination`
-- [ ] `empty-state`
+Semua selesai.
+
+- [x] `combobox` / `autocomplete` — selesai (2026-08-23), di luar giliran. Lihat catatan detail di daftar komponen selesai (bagian Form) di atas.
+- [x] `table` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
+- [x] `pagination` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
+- [x] `empty-state` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 
 ## Tier 3 — mahal, tunda
 
 - [ ] `calendar`
 - [ ] `date-picker`
 - [ ] `command` (command palette)
-- [ ] `data-table` (sorting / filtering / selection)
+- [ ] `data-table` (sorting / filtering / selection) — keputusan arsitektur udah disepakati (2026-08-23), sebelum mulai dikerjain: **konsumen yang manggil `createSvelteTable()` sendiri** (bikin instance-nya sendiri, define `ColumnDef`/sort-fn/dst di kode mereka), komponen kita cuma thin renderer di atas part-part `table` — pake `flexRender` buat render header/cell yang instance-nya udah punya. Bukan komponen yang manggil `createSvelteTable()` internal. Alasan: (1) konsisten sama alasan `@tanstack/svelte-table` dijadiin `peerDependencies` (optional, udah diinstall — lihat `package.json`) bukan `dependencies` biasa, konsumen butuh akses instance langsung; (2) sama pola kayak shadcn-svelte punya `data-table` recipe; (3) tetep semi-headless, komponen gak jadi state-owner berat — sama disiplin "consumer full control" kayak async di `combobox`. Row selection nanti reuse `Checkbox` yang udah ada, pagination nanti pairing sama komponen `pagination` (Tier 2) kalau udah ada. Filtering kemungkinan gak dibakein UI, cuma didokumentasiin polanya (UI filter beda-beda banget per app).
 - [ ] `carousel`
 - [ ] `tree`
 - [ ] `resizable`
@@ -117,7 +145,11 @@ Semua selesai.
 9. ~~`accordion`~~ — selesai (2026-08-23). Pakai `id` (`idFor` per-item, `aria-controls`/`aria-labelledby`-style association) — `roving-focus` sengaja gak dipakai, arrow-key nav antar header itu enhancement opsional di APG, bukan wajib (Enter/Space via native `<button>` udah cukup).
 10. ~~`spinner`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Tanpa primitive.
 11. ~~`drawer`~~ — selesai (2026-08-23), atas permintaan. Semua primitive tervalidasi lewat `dialog`, sesuai rencana. Bug ketemu pas testing manual: overlay `dialog-overlay-out` (150ms) kelar duluan sebelum content `drawer-content-out-*` (200ms), tanpa `animation-fill-mode: forwards` overlay-nya snap balik opaque sebelum akhirnya unmount — keliatan kayak flicker. Fix: tambah `forwards` ke semua token `--animate-*` di `index.css` (dialog, drawer, toast — bukan cuma drawer, biar gak kejadian lagi kalau ada durasi mismatch lain nanti). Lihat catatan "animation-fill-mode" di bawah.
-12. ~~`breadcrumb`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Compound 6-part (`Breadcrumb`/`BreadcrumbList`/`BreadcrumbItem`/`BreadcrumbLink`/`BreadcrumbPage`/`BreadcrumbSeparator`), tanpa primitive. `BreadcrumbLink` pakai pola `child` snippet (asChild-equivalent) buat router-link composability. ← next: `combobox`, atau sisa Tier 2 (`table`/`pagination`/`empty-state`)
+12. ~~`breadcrumb`~~ — selesai (2026-08-23), di luar giliran (batch murah, atas permintaan). Compound 6-part (`Breadcrumb`/`BreadcrumbList`/`BreadcrumbItem`/`BreadcrumbLink`/`BreadcrumbPage`/`BreadcrumbSeparator`), tanpa primitive. `BreadcrumbLink` pakai pola `child` snippet (asChild-equivalent) buat router-link composability.
+13. ~~`combobox`~~ — selesai (2026-08-23), di luar giliran (Tier 2, diprioritasin atas permintaan, di-port dari implementasi existing di project lain). Lihat catatan detail di daftar komponen selesai (bagian Form) di atas.
+14. ~~`table`~~ — selesai (2026-08-23), sesuai urutan Tier 2. Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
+15. ~~`pagination`~~ — selesai (2026-08-23), di luar giliran (atas permintaan, biasanya `empty-state` duluan sesuai urutan Tier 2). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
+16. ~~`empty-state`~~ — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 2 tuntas semua.** ← next: Tier 3 (`data-table` keputusan arsitekturnya udah disepakati, lihat catatan di atas; sisanya — `calendar`/`date-picker`/`command`/`carousel`/`tree`/`resizable` — belum dibahas)
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
 
@@ -141,7 +173,7 @@ Biaya per komponen:
 - `cva` variant (size/variant prop) ikut kena karena spacing nempel di situ.
 - Habis density berubah, hit-target elemen kecil (`button`, `checkbox`, `switch`, `radio`, `toggle`) harus dicek ulang terhadap skill `accessibility` — jangan turun di bawah minimum tap area.
 - Storybook axe test (`test: 'error'`) jalan ulang tiap komponen buat mastiin gak ada regresi a11y dari perubahan visual.
-- Ini breaking change *visual* (bukan breaking API/export) buat consumer yang sudah pakai versi lama — perlu diberi tahu lewat changelog/versioning, bukan cuma patch diam-diam.
+- Ini breaking change _visual_ (bukan breaking API/export) buat consumer yang sudah pakai versi lama — perlu diberi tahu lewat changelog/versioning, bukan cuma patch diam-diam.
 
 ### Urutan yang disarankan
 
@@ -175,6 +207,7 @@ Biaya per komponen:
    - [x] `alert` — selesai (2026-08-23). Bentuknya paralel sama `toast` (resting version-nya): `gap-3` → `gap-loose` (icon-ke-content-block, sama kategori "elemen distinct dalam row" kayak keputusan `toast`), title + description ditambah `leading-snug`. Radius (`rounded-lg`, surface) dan `p-4` dibiarin — alasan sama kayak `toast`/`hover-card`/`popover`. Vitest (20 test, 2 file) tetap hijau.
 
    **Step 3 selesai — semua 25 komponen udah dimigrasi ke gaya Linear.** Full suite dicek ulang di akhir: `npm run test:unit` (57 file, 416 test) dan `--project storybook` (25 story, 142 axe check) semua hijau, gak ada regresi a11y dari perubahan radius/shadow/spacing/line-height di seluruh library.
+
 4. Tiap komponen yang direfactor: update spec/story kalau ada assertion yang terikat ke class lama, re-run axe check.
 
 Belum ada estimasi waktu/token pasti — sifatnya mekanis dan berulang per komponen, bukan kompleks secara logika.
