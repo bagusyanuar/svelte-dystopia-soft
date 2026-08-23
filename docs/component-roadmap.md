@@ -145,8 +145,14 @@ Semua selesai.
 
 - [x] `calendar` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
 - [x] `date-picker` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
-- [ ] `command` (command palette)
+- [ ] `command` (command palette) — ditunda ke versi selanjutnya (2026-08-23, atas permintaan), gak dikerjain di Tier 3 ini. Lihat bagian "Ditunda ke versi selanjutnya" di bawah.
 - [ ] `data-table` (sorting / filtering / selection) — keputusan arsitektur udah disepakati (2026-08-23), sebelum mulai dikerjain: **konsumen yang manggil `createSvelteTable()` sendiri** (bikin instance-nya sendiri, define `ColumnDef`/sort-fn/dst di kode mereka), komponen kita cuma thin renderer di atas part-part `table` — pake `flexRender` buat render header/cell yang instance-nya udah punya. Bukan komponen yang manggil `createSvelteTable()` internal. Alasan: (1) konsisten sama alasan `@tanstack/svelte-table` dijadiin `peerDependencies` (optional, udah diinstall — lihat `package.json`) bukan `dependencies` biasa, konsumen butuh akses instance langsung; (2) sama pola kayak shadcn-svelte punya `data-table` recipe; (3) tetep semi-headless, komponen gak jadi state-owner berat — sama disiplin "consumer full control" kayak async di `combobox`. Row selection nanti reuse `Checkbox` yang udah ada, pagination nanti pairing sama komponen `pagination` (Tier 2) kalau udah ada. Filtering kemungkinan gak dibakein UI, cuma didokumentasiin polanya (UI filter beda-beda banget per app).
+
+### Ditunda ke versi selanjutnya
+
+Komponen berikut sengaja dikeluarkan dari scope Tier 3 sekarang (2026-08-23, atas permintaan) — masuk daftar tunggu buat versi library selanjutnya, bukan dibatalkan:
+
+- [ ] `command` (command palette)
 - [ ] `carousel`
 - [ ] `tree`
 - [ ] `resizable`
@@ -171,7 +177,7 @@ Semua selesai.
 14. ~~`table`~~ — selesai (2026-08-23), sesuai urutan Tier 2. Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 15. ~~`pagination`~~ — selesai (2026-08-23), di luar giliran (atas permintaan, biasanya `empty-state` duluan sesuai urutan Tier 2). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 16. ~~`empty-state`~~ — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 2 tuntas semua.**
-17. ~~`calendar`~~ + ~~`date-picker`~~ — selesai (2026-08-23), di luar giliran Tier 3 (diprioritasin atas permintaan sebelum `data-table`/`command`/dst). Dependency baru `@internationalized/date` ditambah khusus buat ini. Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas. ← next: sisa Tier 3 (`data-table` keputusan arsitekturnya udah disepakati, lihat catatan di atas; `command`/`carousel`/`tree`/`resizable` belum dibahas)
+17. ~~`calendar`~~ + ~~`date-picker`~~ — selesai (2026-08-23), di luar giliran Tier 3 (diprioritasin atas permintaan sebelum `data-table`/`command`/dst). Dependency baru `@internationalized/date` ditambah khusus buat ini. Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas. ← next: `data-table` (keputusan arsitekturnya udah disepakati, lihat catatan di atas). `command`/`carousel`/`tree`/`resizable` ditunda ke versi selanjutnya (2026-08-23, atas permintaan) — lihat bagian "Ditunda ke versi selanjutnya" di Tier 3.
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
 
