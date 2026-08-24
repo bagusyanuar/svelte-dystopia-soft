@@ -73,11 +73,13 @@
 	import { createRawSnippet } from 'svelte';
 	import {
 		createColumnHelper,
+		createExpandedRowModel,
 		createPaginatedRowModel,
 		createSortedRowModel,
 		createTable,
 		renderComponent,
 		renderSnippet,
+		rowExpandingFeature,
 		rowPaginationFeature,
 		rowSelectionFeature,
 		rowSortingFeature,
@@ -196,6 +198,29 @@
 		}
 	});
 
+	const expandableFeatures = tableFeatures({
+		rowExpandingFeature,
+		expandedRowModel: createExpandedRowModel()
+	});
+	const expandableColumnHelper = createColumnHelper<typeof expandableFeatures, Invoice>();
+	const expandableColumns = expandableColumnHelper.columns([
+		expandableColumnHelper.accessor('id', { header: 'Invoice' }),
+		expandableColumnHelper.accessor('customer', { header: 'Customer' }),
+		expandableColumnHelper.accessor('status', { header: 'Status' }),
+		expandableColumnHelper.accessor('amount', {
+			header: 'Amount',
+			cell: (ctx) => `$${ctx.getValue()}.00`
+		})
+	]);
+	const expandableTable = createTable({
+		features: expandableFeatures,
+		columns: expandableColumns,
+		getRowCanExpand: () => true,
+		get data() {
+			return invoices;
+		}
+	});
+
 	const paginatedFeatures = tableFeatures({
 		rowPaginationFeature,
 		paginatedRowModel: createPaginatedRowModel()
@@ -265,6 +290,29 @@
 >
 	<div class="w-160">
 		<DataTable table={selectableTable} />
+	</div>
+</Story>
+
+<Story
+	name="Expandable rows"
+	asChild
+	parameters={{
+		docs: {
+			description: {
+				story:
+					"`DataTable` owns no expanding state — this table composes `rowExpandingFeature` + `createExpandedRowModel()` itself via `createTable()`, and sets `getRowCanExpand: () => true` so every row qualifies. Instead of a dedicated toggle button, `DataTable` makes the whole row clickable (and focusable/Enter-Space-able) whenever `row.getCanExpand()` is true, toggling `row.toggleExpanded()`; the `expandedRow` snippet then renders as a full-width row beneath it while `row.getIsExpanded()` is true. A row from a table without the expanding feature composed (every other story on this page) is left exactly as before — not focusable, not clickable."
+			}
+		}
+	}}
+>
+	<div class="w-160">
+		<DataTable table={expandableTable}>
+			{#snippet expandedRow({ row })}
+				<div class="px-compact py-2 text-sm text-foreground-subtle">
+					Full details for {row.original.customer}'s invoice {row.original.id}.
+				</div>
+			{/snippet}
+		</DataTable>
 	</div>
 </Story>
 

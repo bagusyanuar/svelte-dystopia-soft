@@ -5,6 +5,6 @@
 	let { class: className, children, ...restProps }: TableHeaderProps = $props();
 </script>
 
-<thead class={cn('border-b border-border', className)} {...restProps}>
+<thead class={cn('border-b border-border bg-surface-subtle', className)} {...restProps}>
 	{@render children()}
 </thead>

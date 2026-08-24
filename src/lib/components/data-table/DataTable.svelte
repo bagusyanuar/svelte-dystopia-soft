@@ -1,6 +1,7 @@
 <script generics="TFeatures extends TableFeatures, TData extends RowData" lang="ts">
 	import { FlexRender } from '@tanstack/svelte-table';
 	import type { RowData, TableFeatures } from '@tanstack/svelte-table';
+	import { cn } from '../../utils/cn.js';
 	import Table from '../table/Table.svelte';
 	import TableCaption from '../table/TableCaption.svelte';
 	import TableHeader from '../table/TableHeader.svelte';
@@ -18,10 +19,15 @@
 		labels,
 		empty,
 		caption,
+		expandedRow,
 		...restProps
 	}: DataTableProps<TFeatures, TData> = $props();
 
 	const rows = $derived(table.getRowModel().rows);
+
+	function toggleRowExpanded(row: (typeof rows)[number]) {
+		if ('toggleExpanded' in row) row.toggleExpanded();
+	}
 </script>
 
 <Table class={className} classes={{ table: classes?.table }} {...restProps}>
@@ -71,13 +77,36 @@
 			{#each rows as row (row.id)}
 				{@const cells = 'getVisibleCells' in row ? row.getVisibleCells() : row.getAllCells()}
 				{@const selected = 'getIsSelected' in row ? row.getIsSelected() : false}
-				<TableRow class={classes?.row} {selected}>
+				{@const expandable = 'getCanExpand' in row ? row.getCanExpand() : false}
+				{@const expanded = expandable && 'getIsExpanded' in row ? row.getIsExpanded() : false}
+				<TableRow
+					class={cn(expandable && 'cursor-pointer', classes?.row)}
+					{selected}
+					data-expanded={expandable && expanded ? '' : undefined}
+					tabindex={expandable ? 0 : undefined}
+					onclick={expandable ? () => toggleRowExpanded(row) : undefined}
+					onkeydown={expandable
+						? (event) => {
+								if (event.key === 'Enter' || event.key === ' ') {
+									event.preventDefault();
+									toggleRowExpanded(row);
+								}
+							}
+						: undefined}
+				>
 					{#each cells as cell (cell.id)}
 						<TableCell class={classes?.cell}>
 							<FlexRender {cell} />
 						</TableCell>
 					{/each}
 				</TableRow>
+				{#if expandable && expanded && expandedRow}
+					<TableRow>
+						<TableCell class={classes?.cell} colspan={cells.length}>
+							{@render expandedRow({ row })}
+						</TableCell>
+					</TableRow>
+				{/if}
 			{/each}
 		{/if}
 	</TableBody>

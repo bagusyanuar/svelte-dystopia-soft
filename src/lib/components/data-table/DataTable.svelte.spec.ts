@@ -1,5 +1,7 @@
 import {
+	createExpandedRowModel,
 	createTable,
+	rowExpandingFeature,
 	rowSelectionFeature,
 	rowSortingFeature,
 	tableFeatures
@@ -25,6 +27,10 @@ const columns = [
 const coreFeatures = tableFeatures({});
 const sortableFeatures = tableFeatures({ rowSortingFeature });
 const selectableFeatures = tableFeatures({ rowSelectionFeature });
+const expandableFeatures = tableFeatures({
+	rowExpandingFeature,
+	expandedRowModel: createExpandedRowModel()
+});
 
 function coreInstance(data: Person[] = people) {
 	return () =>
@@ -59,7 +65,20 @@ function selectableInstance() {
 		});
 }
 
+function expandableInstance() {
+	return () =>
+		createTable({
+			features: expandableFeatures,
+			columns,
+			getRowCanExpand: () => true,
+			get data() {
+				return people;
+			}
+		});
+}
+
 const emptySnippet = createRawSnippet(() => ({ render: () => `<p>Nothing here</p>` }));
+const expandedRowSnippet = createRawSnippet(() => ({ render: () => `<p>Row details</p>` }));
 
 describe('DataTable', () => {
 	it('renders header cells and body rows from the table instance', async () => {
@@ -122,5 +141,46 @@ describe('DataTable', () => {
 		render(DataTableFixture, { createInstance: coreInstance(), classes: { table: 'table-fixed' } });
 
 		expect(page.getByRole('table').element().className).toContain('table-fixed');
+	});
+
+	it('does not make a row focusable/clickable when the table has no row-expanding feature', async () => {
+		render(DataTableFixture, { createInstance: coreInstance() });
+
+		const row = page.getByRole('cell', { name: 'Ada' }).element().closest('tr');
+		expect(row?.hasAttribute('tabindex')).toBe(false);
+		expect(row?.hasAttribute('data-expanded')).toBe(false);
+	});
+
+	it('toggles data-expanded and reveals the `expandedRow` snippet on row click', async () => {
+		render(DataTableFixture, {
+			createInstance: expandableInstance(),
+			expandedRow: expandedRowSnippet
+		});
+
+		const row = page.getByRole('cell', { name: 'Ada' }).element().closest('tr') as HTMLElement;
+		expect(row.hasAttribute('data-expanded')).toBe(false);
+		expect(page.getByText('Row details').elements().length).toBe(0);
+
+		await userEvent.click(row);
+		expect(row.hasAttribute('data-expanded')).toBe(true);
+		await expect.element(page.getByText('Row details')).toBeInTheDocument();
+
+		await userEvent.click(row);
+		expect(row.hasAttribute('data-expanded')).toBe(false);
+		expect(page.getByText('Row details').elements().length).toBe(0);
+	});
+
+	it('toggles expansion via keyboard (Enter) on a focused row', async () => {
+		render(DataTableFixture, {
+			createInstance: expandableInstance(),
+			expandedRow: expandedRowSnippet
+		});
+
+		const row = page.getByRole('cell', { name: 'Ada' }).element().closest('tr') as HTMLElement;
+		row.focus();
+		await userEvent.keyboard('{Enter}');
+
+		expect(row.hasAttribute('data-expanded')).toBe(true);
+		await expect.element(page.getByText('Row details')).toBeInTheDocument();
 	});
 });

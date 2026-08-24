@@ -99,7 +99,7 @@
 </Story>
 
 <Story name="Narrow container (horizontal scroll)" asChild>
-	<div class="w-72 rounded-lg border border-border">
+	<div class="w-72">
 		<Table>
 			<TableHeader>
 				<TableRow>

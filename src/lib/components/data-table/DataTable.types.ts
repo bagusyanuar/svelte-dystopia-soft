@@ -1,4 +1,4 @@
-import type { RowData, Table, TableFeatures } from '@tanstack/svelte-table';
+import type { Row, RowData, Table, TableFeatures } from '@tanstack/svelte-table';
 import type { Snippet } from 'svelte';
 import type { HTMLTableAttributes } from 'svelte/elements';
 
@@ -26,4 +26,10 @@ export interface DataTableProps<
 	/** Overrides the default `EmptyState` row shown when `table.getRowModel().rows` is empty. */
 	empty?: Snippet;
 	caption?: Snippet;
+	/**
+	 * Rendered as a full-width row beneath any row where `row.getIsExpanded()` is true.
+	 * Requires the consumer's `table` to compose `rowExpandingFeature` — a row without
+	 * `getCanExpand()` is rendered exactly as before, click-to-expand included.
+	 */
+	expandedRow?: Snippet<[{ row: Row<TFeatures, TData> }]>;
 }

@@ -25,16 +25,17 @@
 
 <div class={cn('flex flex-wrap items-center justify-between gap-cozy', className)} {...restProps}>
 	<div class="flex items-center gap-tight">
-		<Label for={ids['page-size']}>{labels?.pageSize ?? 'Rows per page'}</Label>
+		<Label for={ids['page-size']} class="font-normal">{labels?.pageSize ?? 'Rows per page'}</Label>
 		<Select
 			id={ids['page-size']}
 			{size}
-			class={cn('w-20', classes?.pageSize)}
+			class={cn('w-fit', classes?.pageSize)}
+			classes={{ select: 'focus-visible:ring-0 focus-visible:border-ring' }}
 			value={String(pagination.pageSize)}
 			onchange={(event) => table.setPageSize(Number(event.currentTarget.value))}
 		>
 			{#each pageSizeOptions as option (option)}
-				<option value={option}>{option}</option>
+				<option value={String(option)}>{option}</option>
 			{/each}
 		</Select>
 	</div>
