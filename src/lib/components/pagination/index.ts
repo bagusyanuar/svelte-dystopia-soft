@@ -16,9 +16,21 @@ export {
 
 export { default as PaginationEllipsis } from './PaginationEllipsis.svelte';
 export type { PaginationEllipsisProps } from './PaginationEllipsis.types.js';
+export {
+	paginationEllipsisVariants,
+	type PaginationEllipsisVariantProps
+} from './PaginationEllipsis.variants.js';
 
 export { default as PaginationPrevious } from './PaginationPrevious.svelte';
 export type { PaginationPreviousProps } from './PaginationPrevious.types.js';
+export {
+	paginationPreviousVariants,
+	type PaginationPreviousVariantProps
+} from './PaginationPrevious.variants.js';
 
 export { default as PaginationNext } from './PaginationNext.svelte';
 export type { PaginationNextProps } from './PaginationNext.types.js';
+export {
+	paginationNextVariants,
+	type PaginationNextVariantProps
+} from './PaginationNext.variants.js';

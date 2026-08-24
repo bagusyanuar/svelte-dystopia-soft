@@ -5,7 +5,7 @@
 
 	type PaginationStoryArgs = Pick<
 		PaginationProps,
-		'totalPages' | 'siblingCount' | 'boundaryCount' | 'showPreviousNext' | 'disabled'
+		'totalPages' | 'siblingCount' | 'boundaryCount' | 'showPreviousNext' | 'disabled' | 'size'
 	>;
 
 	const { Story } = defineMeta({
@@ -17,7 +17,8 @@
 			siblingCount: { control: { type: 'number', min: 0 } },
 			boundaryCount: { control: { type: 'number', min: 0 } },
 			showPreviousNext: { control: 'boolean' },
-			disabled: { control: 'boolean' }
+			disabled: { control: 'boolean' },
+			size: { control: 'select', options: ['sm', 'md', 'lg'] }
 		}
 	});
 </script>
@@ -26,6 +27,25 @@
 	{#snippet template(args: PaginationStoryArgs)}
 		<Pagination {...args} currentPage={8} />
 	{/snippet}
+</Story>
+
+<Story
+	name="Sizes"
+	asChild
+	parameters={{
+		docs: {
+			description: {
+				story:
+					"Density variant, applied to every auto-rendered part (link, previous, next, ellipsis). Default `'md'` — unchanged from before this prop existed. `'sm'` is the dense option for Linear-style layouts (this is also `DataTablePagination`'s default, since it pairs with `DataTable`'s compact rows)."
+			}
+		}
+	}}
+>
+	<div class="flex flex-col items-start gap-cozy">
+		<Pagination size="sm" totalPages={10} currentPage={3} labels={{ nav: 'pagination (sm)' }} />
+		<Pagination size="md" totalPages={10} currentPage={3} labels={{ nav: 'pagination (md)' }} />
+		<Pagination size="lg" totalPages={10} currentPage={3} labels={{ nav: 'pagination (lg)' }} />
+	</div>
 </Story>
 
 <Story name="Ellipsis on one side" asChild>

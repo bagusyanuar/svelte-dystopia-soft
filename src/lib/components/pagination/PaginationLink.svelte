@@ -6,6 +6,7 @@
 	let {
 		class: className,
 		active = false,
+		size = 'md',
 		child,
 		children,
 		...restProps
@@ -16,7 +17,7 @@
 		type: 'button' as const,
 		'aria-current': active ? ('page' as const) : undefined,
 		'data-active': active ? '' : undefined,
-		class: cn(paginationLinkVariants({ active }), className)
+		class: cn(paginationLinkVariants({ active, size }), className)
 	});
 </script>
 

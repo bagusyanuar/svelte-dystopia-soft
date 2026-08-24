@@ -15,6 +15,7 @@
 		boundaryCount = 1,
 		showPreviousNext = true,
 		disabled = false,
+		size = 'md',
 		class: className,
 		classes,
 		labels,
@@ -42,6 +43,7 @@
 					class={classes?.previous}
 					disabled={disabled || currentPage <= 1}
 					label={labels?.previous}
+					{size}
 					onclick={() => goTo(currentPage - 1)}
 				/>
 			</PaginationItem>
@@ -50,7 +52,7 @@
 		{#each pages as pageItem, index (index)}
 			<PaginationItem class={classes?.item}>
 				{#if pageItem === 'ellipsis'}
-					<PaginationEllipsis class={classes?.ellipsis} />
+					<PaginationEllipsis class={classes?.ellipsis} {size} />
 				{:else if item}
 					{@render item({ page: pageItem, active: pageItem === currentPage })}
 				{:else}
@@ -58,6 +60,7 @@
 						class={classes?.link}
 						active={pageItem === currentPage}
 						{disabled}
+						{size}
 						aria-label={labels?.page?.(pageItem)}
 						onclick={() => goTo(pageItem)}
 					>
@@ -73,6 +76,7 @@
 					class={classes?.next}
 					disabled={disabled || currentPage >= totalPages}
 					label={labels?.next}
+					{size}
 					onclick={() => goTo(currentPage + 1)}
 				/>
 			</PaginationItem>

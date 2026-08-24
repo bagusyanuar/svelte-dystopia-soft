@@ -65,7 +65,7 @@
 		'',
 		"`DataTable` has no `loading` prop by design (see the component roadmap) — it stays a thin renderer over whatever `table.getRowModel().rows` currently holds. While a query is pending, that row model is simply empty, so the `empty` snippet is what carries loading/error/empty-for-real state; branch on the query's own flags there like above, rather than reaching for a prop that doesn't exist.",
 		'',
-		'Row pagination follows the same ownership rule: compose `rowPaginationFeature` into your `tableFeatures()` call and drive the existing [`Pagination`](/docs/components-pagination--docs) component off `table.getState().pagination` / `table.setPageIndex()` — `DataTable` does not pair the two for you.'
+		'Row pagination follows the same ownership rule: compose `rowPaginationFeature` + `createPaginatedRowModel()` into your `tableFeatures()` call, then hand the same `table` instance to `DataTablePagination` — `DataTable` does not pair the two for you. See the "With pagination" story on this page.'
 	].join('\n');
 </script>
 
@@ -73,16 +73,19 @@
 	import { createRawSnippet } from 'svelte';
 	import {
 		createColumnHelper,
+		createPaginatedRowModel,
 		createSortedRowModel,
 		createTable,
 		renderComponent,
 		renderSnippet,
+		rowPaginationFeature,
 		rowSelectionFeature,
 		rowSortingFeature,
 		sortFns,
 		tableFeatures
 	} from '@tanstack/svelte-table';
 	import DataTableColumnHeader from './DataTableColumnHeader.svelte';
+	import DataTablePagination from './DataTablePagination.svelte';
 	import Checkbox from '../checkbox/Checkbox.svelte';
 
 	type Invoice = { id: string; customer: string; status: string; amount: number };
@@ -92,6 +95,13 @@
 		{ id: 'INV002', customer: 'Grace Hopper', status: 'Pending', amount: 150 },
 		{ id: 'INV003', customer: 'Alan Turing', status: 'Unpaid', amount: 350 }
 	];
+
+	const manyInvoices: Invoice[] = Array.from({ length: 23 }, (_, i) => ({
+		id: `INV${String(i + 1).padStart(3, '0')}`,
+		customer: ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson'][i % 4],
+		status: ['Paid', 'Pending', 'Unpaid'][i % 3],
+		amount: 100 + i * 25
+	}));
 
 	function label(text: string) {
 		return createRawSnippet(() => ({ render: () => `<span>${text}</span>` }));
@@ -185,6 +195,29 @@
 			return invoices;
 		}
 	});
+
+	const paginatedFeatures = tableFeatures({
+		rowPaginationFeature,
+		paginatedRowModel: createPaginatedRowModel()
+	});
+	const paginatedColumnHelper = createColumnHelper<typeof paginatedFeatures, Invoice>();
+	const paginatedColumns = paginatedColumnHelper.columns([
+		paginatedColumnHelper.accessor('id', { header: 'Invoice' }),
+		paginatedColumnHelper.accessor('customer', { header: 'Customer' }),
+		paginatedColumnHelper.accessor('status', { header: 'Status' }),
+		paginatedColumnHelper.accessor('amount', {
+			header: 'Amount',
+			cell: (ctx) => `$${ctx.getValue()}.00`
+		})
+	]);
+	const paginatedTable = createTable({
+		features: paginatedFeatures,
+		columns: paginatedColumns,
+		get data() {
+			return manyInvoices;
+		},
+		initialState: { pagination: { pageIndex: 0, pageSize: 5 } }
+	});
 </script>
 
 <Story name="Default" asChild>
@@ -232,6 +265,24 @@
 >
 	<div class="w-160">
 		<DataTable table={selectableTable} />
+	</div>
+</Story>
+
+<Story
+	name="With pagination"
+	asChild
+	parameters={{
+		docs: {
+			description: {
+				story:
+					"`DataTable` does not pair with pagination for you — this table composes `rowPaginationFeature` + `createPaginatedRowModel()` itself via `createTable()`, and `DataTablePagination` is handed the same `table` instance: it renders a rows-per-page `Select` (calling `table.setPageSize()`, which recomputes `pageIndex` itself so the current top row stays in view) alongside `Pagination` (`currentPage`/`totalPages`/`onPageChange` wired to `table.atoms.pagination` / `table.getPageCount()` / `table.setPageIndex()`). Same ownership rule as sorting and selection above — `DataTable` owns none of this state, and `DataTablePagination` is purely a convenience composition, not a new state owner. Its `size` defaults to `'sm'` to match `DataTable`'s row density; pass `size='md'` or `'lg'` for a roomier layout, or skip `DataTablePagination` and compose `Pagination` + `Select` yourself for full control over the layout."
+			}
+		}
+	}}
+>
+	<div class="flex w-200 flex-col gap-cozy">
+		<DataTable table={paginatedTable} />
+		<DataTablePagination table={paginatedTable} pageSizeOptions={[5, 10, 20]} />
 	</div>
 </Story>
 

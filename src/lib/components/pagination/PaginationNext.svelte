@@ -1,18 +1,14 @@
 <script lang="ts">
 	import { cn } from '../../utils/cn.js';
+	import { paginationNextVariants } from './PaginationNext.variants.js';
 	import type { PaginationNextProps } from './PaginationNext.types.js';
 
-	let { class: className, label, ...restProps }: PaginationNextProps = $props();
+	let { class: className, label, size = 'md', ...restProps }: PaginationNextProps = $props();
+
+	const iconSize = $derived(size === 'sm' ? 'size-3.5' : 'size-4');
 </script>
 
-<button
-	type="button"
-	class={cn(
-		'inline-flex h-9 cursor-pointer items-center gap-tight rounded-md px-3 text-sm leading-snug text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-		className
-	)}
-	{...restProps}
->
+<button type="button" class={cn(paginationNextVariants({ size }), className)} {...restProps}>
 	{label ?? 'Next'}
 	<svg
 		viewBox="0 0 24 24"
@@ -22,7 +18,7 @@
 		stroke-linecap="round"
 		stroke-linejoin="round"
 		aria-hidden="true"
-		class="size-4"
+		class={iconSize}
 	>
 		<path d="m9 18 6-6-6-6" />
 	</svg>

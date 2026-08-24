@@ -2,11 +2,11 @@
 
 Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
 
-Terakhir diperbarui: 2026-08-23 (`calendar` + `date-picker` selesai — Tier 3 dimulai)
+Terakhir diperbarui: 2026-08-24 (`data-table` selesai)
 
 ---
 
-## Sudah selesai (39 komponen)
+## Sudah selesai (40 komponen)
 
 Semua sudah punya `index.ts` sebagai public entry point.
 
@@ -78,6 +78,7 @@ Semua sudah punya `index.ts` sebagai public entry point.
   - `currentPage` bindable + `onPageChange` callback — pola sama persis kayak `value`/`onValueChange` combobox.
   - `labels` terstruktur (`nav`/`previous`/`next`/`page` function) — gak ada hardcode English tanpa override, termasuk `nav` yang notabene `Breadcrumb` sendiri hardcode `aria-label="breadcrumb"` tanpa override (`Pagination` sengaja lebih ketat ngikutin skill `accessibility`).
 - [x] `empty-state` — selesai (2026-08-23), Tier 2, tuntas. Single component (bukan compound) — sama kelasnya kayak `alert`, variance layout-nya rendah (icon-title-description-action, satu bentuk yang dipakai hampir semua app), gak ada alasan buat full compound treatment. Struktur & prop shape literally nyontek `alert` (`icon`/`title`/`description` snippet + `children` buat action, `classes` terstruktur per-part) — bedanya: layout `flex-col items-center text-center` (bukan horizontal kayak alert), gak ada `variant`/border/background default (biar gak nested-double-border kalau ditaro di dalam `Card`/`Table`/container lain yang udah punya border sendiri — liat story "Inside a table"), icon lebih besar (`size-10`, ikon ilustrasi bukan ikon kecil notifikasi), `role="status"` (bukan `role="alert"` — live region polite, buat kasus umum "hasil search/filter jadi kosong" yang wajar di-announce ke AT tapi gak urgent, beda dari alert yang assertive).
+- [x] `data-table` — selesai (2026-08-24), Tier 3. Sesuai keputusan arsitektur yang udah disepakati sebelumnya (lihat riwayat di bagian Tier 3 di bawah): konsumen manggil `createSvelteTable()` sendiri, komponen di sini cuma thin renderer di atas part `table` yang udah ada, pake `FlexRender` dari `@tanstack/svelte-table` (`peerDependencies`, bukan `dependencies` biasa). Compound 2-part: `DataTable` (root — render `Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell` dari header group & row model instance TanStack, `caption` snippet opsional, `empty` snippet override buat state kosong — default-nya reuse `EmptyState` yang udah ada) dan `DataTableColumnHeader` (tombol sort per kolom, cuma dirender kalau `column.getCanSort()` true, chevron icon nunjukin arah asc/desc/unsorted, `aria-sort` di-set di `TableHead` induknya, bukan di tombolnya sendiri). Row selection (`row.getIsSelected()`) dipassing ke `TableRow`'s `selected` prop yang emang udah disiapin dari `table` (lihat catatan `table` di atas) — gak ada state/primitive baru. `TFeatures extends TableFeatures, TData extends RowData` generic, pola sama disiplin generic pertama `combobox` (`ComboboxValue`). Filtering sengaja gak dibakein UI (didokumentasiin polanya doang), sesuai keputusan awal.
 
 ### Date & time
 
@@ -146,7 +147,7 @@ Semua selesai.
 - [x] `calendar` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
 - [x] `date-picker` — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
 - [ ] `command` (command palette) — ditunda ke versi selanjutnya (2026-08-23, atas permintaan), gak dikerjain di Tier 3 ini. Lihat bagian "Ditunda ke versi selanjutnya" di bawah.
-- [ ] `data-table` (sorting / filtering / selection) — keputusan arsitektur udah disepakati (2026-08-23), sebelum mulai dikerjain: **konsumen yang manggil `createSvelteTable()` sendiri** (bikin instance-nya sendiri, define `ColumnDef`/sort-fn/dst di kode mereka), komponen kita cuma thin renderer di atas part-part `table` — pake `flexRender` buat render header/cell yang instance-nya udah punya. Bukan komponen yang manggil `createSvelteTable()` internal. Alasan: (1) konsisten sama alasan `@tanstack/svelte-table` dijadiin `peerDependencies` (optional, udah diinstall — lihat `package.json`) bukan `dependencies` biasa, konsumen butuh akses instance langsung; (2) sama pola kayak shadcn-svelte punya `data-table` recipe; (3) tetep semi-headless, komponen gak jadi state-owner berat — sama disiplin "consumer full control" kayak async di `combobox`. Row selection nanti reuse `Checkbox` yang udah ada, pagination nanti pairing sama komponen `pagination` (Tier 2) kalau udah ada. Filtering kemungkinan gak dibakein UI, cuma didokumentasiin polanya (UI filter beda-beda banget per app).
+- [x] `data-table` (sorting / filtering / selection) — selesai (2026-08-24). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 
 ### Ditunda ke versi selanjutnya
 
@@ -177,7 +178,8 @@ Komponen berikut sengaja dikeluarkan dari scope Tier 3 sekarang (2026-08-23, ata
 14. ~~`table`~~ — selesai (2026-08-23), sesuai urutan Tier 2. Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 15. ~~`pagination`~~ — selesai (2026-08-23), di luar giliran (atas permintaan, biasanya `empty-state` duluan sesuai urutan Tier 2). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas.
 16. ~~`empty-state`~~ — selesai (2026-08-23). Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 2 tuntas semua.**
-17. ~~`calendar`~~ + ~~`date-picker`~~ — selesai (2026-08-23), di luar giliran Tier 3 (diprioritasin atas permintaan sebelum `data-table`/`command`/dst). Dependency baru `@internationalized/date` ditambah khusus buat ini. Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas. ← next: `data-table` (keputusan arsitekturnya udah disepakati, lihat catatan di atas). `command`/`carousel`/`tree`/`resizable` ditunda ke versi selanjutnya (2026-08-23, atas permintaan) — lihat bagian "Ditunda ke versi selanjutnya" di Tier 3.
+17. ~~`calendar`~~ + ~~`date-picker`~~ — selesai (2026-08-23), di luar giliran Tier 3 (diprioritasin atas permintaan sebelum `data-table`/`command`/dst). Dependency baru `@internationalized/date` ditambah khusus buat ini. Lihat catatan detail di daftar komponen selesai (bagian Date & time) di atas.
+18. ~~`data-table`~~ — selesai (2026-08-24), sesuai urutan Tier 3. Lihat catatan detail di daftar komponen selesai (bagian Data display) di atas. **Tier 3 tuntas** kecuali `command`/`carousel`/`tree`/`resizable` yang ditunda ke versi selanjutnya (2026-08-23, atas permintaan) — lihat bagian "Ditunda ke versi selanjutnya" di Tier 3.
 
 Di luar urutan ini: `drawer`/`sheet` (Tier 2) sekarang murah dikerjakan kapan saja karena semua primitive-nya sudah terbukti lewat `dialog` — naikkan prioritasnya kalau ada kebutuhan konkret.
 

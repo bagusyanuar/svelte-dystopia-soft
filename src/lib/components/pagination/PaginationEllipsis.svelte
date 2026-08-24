@@ -1,15 +1,12 @@
 <script lang="ts">
 	import { cn } from '../../utils/cn.js';
+	import { paginationEllipsisVariants } from './PaginationEllipsis.variants.js';
 	import type { PaginationEllipsisProps } from './PaginationEllipsis.types.js';
 
-	let { class: className, children, ...restProps }: PaginationEllipsisProps = $props();
+	let { class: className, size = 'md', children, ...restProps }: PaginationEllipsisProps = $props();
 </script>
 
-<span
-	aria-hidden="true"
-	class={cn('flex h-9 min-w-9 items-center justify-center text-foreground-faint', className)}
-	{...restProps}
->
+<span aria-hidden="true" class={cn(paginationEllipsisVariants({ size }), className)} {...restProps}>
 	{#if children}
 		{@render children()}
 	{:else}

@@ -1,5 +1,6 @@
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';
+import type { PaginationLinkVariantProps } from './PaginationLink.variants.js';
 
 export interface PaginationLabels {
 	/** Accessible name for the root `<nav>`. Defaults to "pagination". */
@@ -21,6 +22,8 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, 'chil
 	/** Default true. */
 	showPreviousNext?: boolean;
 	disabled?: boolean;
+	/** Density variant, applied to every auto-rendered part (link, previous, next, ellipsis). Default 'md'. */
+	size?: PaginationLinkVariantProps['size'];
 	class?: string;
 	classes?: {
 		list?: string;
