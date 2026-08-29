@@ -1,10 +1,6 @@
 <script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import Separator from './Separator.svelte';
-	import type { SeparatorProps } from './Separator.types.js';
-
-	type SeparatorStoryArgs = Pick<SeparatorProps, 'orientation' | 'decorative'>;
-
 	const { Story } = defineMeta({
 		title: 'Components/Separator',
 		component: Separator,

@@ -69,13 +69,13 @@ That folder `index.ts` **is** the component's public entry point — there is no
 }
 ```
 
-so consumers import it as `@dystopia/soft-lib/components/text-field`. **A new component folder needs no `package.json` change** — dropping an `index.ts` into `src/lib/components/<name>/` publishes it. Which also means: don't create a folder there unless it's meant to be public.
+so consumers import it as `dystopia-linear-lib/components/text-field`. **A new component folder needs no `package.json` change** — dropping an `index.ts` into `src/lib/components/<name>/` publishes it. Which also means: don't create a folder there unless it's meant to be public.
 
 Three rules that are easy to get wrong:
 
 - **Use explicit named re-exports, never `export *`.** `export *` leaks whatever a component file happens to export and makes the public surface accidental — see the public-API rule in [CLAUDE.md](../../../CLAUDE.md).
 - **Inside the library, write `/index.js` explicitly** when one module imports another folder's barrel. `moduleResolution: NodeNext` does not resolve a directory to its `index` file — `'../text-field'` fails, `'../text-field/index.js'` works. Same reason relative imports need the `.js` extension at all. (Consumers are unaffected: the `exports` wildcard resolves the bare subpath for them.)
-- **`src/lib/utils/` uses a flat wildcard** (`"./utils/*"` → `./dist/utils/*.js`), so utils are single files with no folder or barrel: `@dystopia/soft-lib/utils/cn`.
+- **`src/lib/utils/` uses a flat wildcard** (`"./utils/*"` → `./dist/utils/*.js`), so utils are single files with no folder or barrel: `dystopia-linear-lib/utils/cn`.
 
 ### Don't "clean up" the `.js` extensions
 

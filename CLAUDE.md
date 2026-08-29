@@ -4,7 +4,7 @@ Guidance for Claude Code (and any other agent) working in this repository.
 
 ## Project purpose
 
-This is a **Svelte component/utility library** (`@dystopia/soft-lib`), scaffolded with `sv create --template library`. The end goal is to publish it to npm as a reusable package for other Svelte projects to install and import — this repo is **not** an application.
+This is a **Svelte component/utility library** (`dystopia-linear-lib`), scaffolded with `sv create --template library`. The end goal is to publish it to npm as a reusable package for other Svelte projects to install and import — this repo is **not** an application.
 
 ## Directory model — read this first
 
@@ -32,13 +32,13 @@ Svelte 5 runes syntax, Tailwind v4 syntax, the "SaaS Compact Minimalist" design 
 This library is **subpath-only** — there is deliberately no root barrel and no `src/lib/index.ts`. Consumers import each component from its own path:
 
 ```ts
-import { TextField } from '@dystopia/soft-lib/components/text-field';
-import { cn } from '@dystopia/soft-lib/utils/cn';
+import { TextField } from 'dystopia-linear-lib/components/text-field';
+import { cn } from 'dystopia-linear-lib/utils/cn';
 ```
 
 - Each component folder's `index.ts` **is** its public entry point. Whatever it exports is public API; anything not re-exported there is internal. Use explicit named re-exports, never `export *` — see the per-component barrel section in the `naming-convention` skill.
 - The `exports` map in `package.json` uses wildcards (`"./components/*"`, `"./utils/*"`), so a new component folder with an `index.ts` is publicly importable with **no `package.json` change**. That cuts both ways: don't add a folder under `src/lib/components` or `src/lib/utils` unless it's meant to be public.
-- Importing the package root (`@dystopia/soft-lib`) fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`. That's intentional, not a bug — don't "fix" it by adding a `"."` export.
+- Importing the package root (`dystopia-linear-lib`) fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`. That's intentional, not a bug — don't "fix" it by adding a `"."` export.
 - Before removing or renaming a folder, a folder's `index.ts` export, or an `exports` path, treat it as a breaking change (semver major). Prefer additive changes; deprecate before removing when possible.
 - Keep the public surface intentional and minimal — don't export internal helpers "just in case."
 

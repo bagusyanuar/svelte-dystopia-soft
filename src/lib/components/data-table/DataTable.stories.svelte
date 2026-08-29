@@ -21,7 +21,7 @@
 		'// instance script',
 		"import { createQuery } from '@tanstack/svelte-query';",
 		"import { createColumnHelper, createTable, tableFeatures } from '@tanstack/svelte-table';",
-		"import { DataTable } from '@dystopia/soft-lib/components/data-table';",
+		"import { DataTable } from 'dystopia-linear-lib/components/data-table';",
 		'',
 		'type Invoice = { id: string; customer: string; amount: number };',
 		'',

@@ -76,7 +76,7 @@ Since `src/lib` ships to npm consumers, two things matter that don't matter in a
 2. **Consumers' Tailwind won't see classes inside `node_modules` by default.** Tailwind v4's automatic source detection skips `.gitignore`d paths and `node_modules`. If a consumer app installs this package and uses Tailwind, their utilities used only inside our compiled `dist/` components won't be generated unless they add:
 
    ```css
-   @source '../node_modules/@dystopia/soft-lib/dist';
+   @source '../node_modules/dystopia-linear-lib/dist';
    ```
 
    Mention this requirement in the README/docs when finalizing the library — it's a common silent breakage for published Tailwind component libraries. Do not assume it "just works" like a same-repo app.
@@ -84,8 +84,8 @@ Since `src/lib` ships to npm consumers, two things matter that don't matter in a
 3. **Ship the theme to consumers.** `src/lib/index.css` (raw token values plus the `@theme inline` map) is exposed via a `package.json` `exports` subpath (`"./index.css": "./dist/index.css"`) and copied **unprocessed** into `dist/` by `svelte-package` — consumers import the raw source, and Tailwind compiles it as part of _their_ build. A consumer needs both of these in their own CSS entry to get correctly styled components:
    ```css
    @import 'tailwindcss';
-   @import '@dystopia/soft-lib/index.css';
-   @source '../node_modules/@dystopia/soft-lib/dist';
+   @import 'dystopia-linear-lib/index.css';
+   @source '../node_modules/dystopia-linear-lib/dist';
    ```
    When adding new shared design tokens (radius, spacing, fonts — not just color), add them to `src/lib/index.css`, never to `src/routes/layout.css` directly.
 

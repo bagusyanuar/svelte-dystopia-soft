@@ -1,6 +1,6 @@
 # Component Roadmap
 
-Status komponen `@dystopia/soft-lib` dan rencana pengembangan berikutnya.
+Status komponen `dystopia-linear-lib` dan rencana pengembangan berikutnya.
 
 Terakhir diperbarui: 2026-08-24 (`data-table` selesai)
 

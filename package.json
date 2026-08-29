@@ -1,6 +1,11 @@
 {
-	"name": "@dystopia/soft-lib",
-	"version": "0.0.1",
+	"name": "dystopia-linear-lib",
+	"version": "1.0.0",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bagusyanuar/svelte-dystopia-soft.git"
+	},
 	"publishConfig": {
 		"access": "public"
 	},

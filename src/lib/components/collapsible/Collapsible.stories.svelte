@@ -59,7 +59,7 @@
 			{#snippet trigger()}
 				How do I install the library?
 			{/snippet}
-			Run <code>npm install @dystopia/soft-lib</code> and import components from their subpath.
+			Run <code>npm install dystopia-linear-lib</code> and import components from their subpath.
 		</Collapsible>
 		<Collapsible>
 			{#snippet trigger()}
