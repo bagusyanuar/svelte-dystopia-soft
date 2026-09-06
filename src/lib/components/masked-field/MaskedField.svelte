@@ -1,0 +1,69 @@
+<script lang="ts">
+	import IMask from 'imask';
+	import TextField from '../text-field/TextField.svelte';
+	import type { MaskedFieldProps } from './MaskedField.types.js';
+
+	let {
+		pattern,
+		value = $bindable(''),
+		// eslint-disable-next-line no-useless-assignment -- output-only: always overwritten from the mask instance once it mounts
+		unmaskedValue = $bindable(),
+		ref = $bindable(null),
+		onValueChange,
+		...restProps
+	}: MaskedFieldProps = $props();
+
+	type MaskInstance = InstanceType<typeof IMask.InputMask>;
+
+	function maskOptions() {
+		return { mask: pattern, definitions: { '#': /\d/ } };
+	}
+
+	let masked: MaskInstance | undefined;
+	let lastCommitted = value;
+
+	// `imask` owns the input's DOM value directly (via `ref`) rather than going
+	// through TextField's own `bind:value` — masking needs full control over
+	// every keystroke (caret position, paste, backspace across literals) that a
+	// plain Svelte binding can't give it.
+	$effect(() => {
+		const input = ref;
+		if (!input) return;
+
+		const instance = IMask(input, maskOptions()) as MaskInstance;
+		instance.value = value;
+		lastCommitted = instance.value;
+		unmaskedValue = instance.unmaskedValue;
+		masked = instance;
+
+		function handleAccept(): void {
+			value = instance.value;
+			unmaskedValue = instance.unmaskedValue;
+			lastCommitted = instance.value;
+			onValueChange?.(instance.value, instance.unmaskedValue);
+		}
+		instance.on('accept', handleAccept);
+
+		return () => {
+			instance.destroy();
+			masked = undefined;
+		};
+	});
+
+	$effect(() => {
+		// `pattern` changed after mount — reconfigure the existing instance
+		// instead of tearing it down and losing focus/caret state.
+		if (masked) masked.updateOptions(maskOptions() as never);
+	});
+
+	$effect(() => {
+		// Reflect an externally-set `value` (e.g. a form reset) into the mask.
+		// Guarded against our own commits so this doesn't race with typing —
+		// the same fix `NumberField`'s `lastCommitted` tracking needed.
+		if (value === lastCommitted) return;
+		lastCommitted = value;
+		if (masked) masked.value = value;
+	});
+</script>
+
+<TextField {...restProps} bind:ref />
