@@ -66,3 +66,15 @@
 		/>
 	</div>
 </Story>
+
+<Story name="Month only" asChild>
+	<div class="w-72">
+		<DatePicker granularity="month" defaultMonth={new CalendarDate(2024, 3, 1)} />
+	</div>
+</Story>
+
+<Story name="Year only" asChild>
+	<div class="w-72">
+		<DatePicker granularity="year" defaultMonth={new CalendarDate(2024, 1, 1)} />
+	</div>
+</Story>

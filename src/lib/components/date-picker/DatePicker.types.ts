@@ -8,6 +8,10 @@ export interface DatePickerLabels {
 	placeholder?: string;
 	previousMonth?: string;
 	nextMonth?: string;
+	previousYear?: string;
+	nextYear?: string;
+	previousYears?: string;
+	nextYears?: string;
 }
 
 interface DatePickerBaseProps extends Omit<HTMLButtonAttributes, 'children' | 'value' | 'type'> {
@@ -18,6 +22,12 @@ interface DatePickerBaseProps extends Omit<HTMLButtonAttributes, 'children' | 'v
 	};
 	/** BCP 47 locale used for week-start day, month/weekday, and trigger-value formatting. Defaults to the browser locale. */
 	locale?: string;
+	/**
+	 * `'month'` renders a month-only picker — trigger and popover show month + year, no day step.
+	 * `'year'` renders a year-only picker — trigger and popover show just the year.
+	 * Defaults to `'day'`.
+	 */
+	granularity?: 'day' | 'month' | 'year';
 	/** Month shown initially when there's no value to derive it from. Defaults to the current month. */
 	defaultMonth?: CalendarDate;
 	minValue?: CalendarDate;

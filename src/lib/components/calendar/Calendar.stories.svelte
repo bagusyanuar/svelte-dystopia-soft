@@ -57,3 +57,11 @@
 		labels={{ previousMonth: 'Bulan sebelumnya', nextMonth: 'Bulan berikutnya' }}
 	/>
 </Story>
+
+<Story name="Month only" asChild>
+	<Calendar granularity="month" value={new CalendarDate(2024, 3, 1)} />
+</Story>
+
+<Story name="Year only" asChild>
+	<Calendar granularity="year" value={new CalendarDate(2024, 1, 1)} />
+</Story>

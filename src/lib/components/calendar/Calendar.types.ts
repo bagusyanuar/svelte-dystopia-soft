@@ -11,6 +11,10 @@ export interface CalendarRangeValue {
 export interface CalendarLabels {
 	previousMonth?: string;
 	nextMonth?: string;
+	previousYear?: string;
+	nextYear?: string;
+	previousYears?: string;
+	nextYears?: string;
 }
 
 export interface CalendarDaySnippetProps {
@@ -35,6 +39,12 @@ interface CalendarBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
 	};
 	/** BCP 47 locale used for week-start day and month/weekday formatting. Defaults to the browser locale. */
 	locale?: string;
+	/**
+	 * `'month'` renders a 12-month grid for one year — selecting a month resolves `value` to day 1 of that month.
+	 * `'year'` renders a year-only grid (paged 12 years at a time) — selecting a year resolves `value` to Jan 1 of that year.
+	 * Defaults to `'day'`.
+	 */
+	granularity?: 'day' | 'month' | 'year';
 	/** Month shown initially when there's no `value` (or, in range mode, no `value.start`) to derive it from. Defaults to the current month. */
 	defaultMonth?: CalendarDate;
 	minValue?: CalendarDate;

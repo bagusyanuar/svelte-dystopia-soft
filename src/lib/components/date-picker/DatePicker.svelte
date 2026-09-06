@@ -17,6 +17,7 @@
 		class: className,
 		classes,
 		locale,
+		granularity = 'day',
 		defaultMonth,
 		minValue,
 		maxValue,
@@ -44,7 +45,13 @@
 	const resolvedLocale = $derived(
 		locale ?? (typeof navigator !== 'undefined' ? navigator.language : 'en-US')
 	);
-	const formatter = $derived(new DateFormatter(resolvedLocale, { dateStyle: 'medium' }));
+	const formatter = $derived(
+		granularity === 'year'
+			? new DateFormatter(resolvedLocale, { year: 'numeric' })
+			: granularity === 'month'
+				? new DateFormatter(resolvedLocale, { month: 'long', year: 'numeric' })
+				: new DateFormatter(resolvedLocale, { dateStyle: 'medium' })
+	);
 
 	const formattedValue = $derived.by(() => {
 		if (type === 'range') {
@@ -193,22 +200,38 @@
 				type="range"
 				value={value as CalendarRangeValue | undefined}
 				locale={resolvedLocale}
+				{granularity}
 				{defaultMonth}
 				{minValue}
 				{maxValue}
 				{isDateDisabled}
-				labels={{ previousMonth: labels?.previousMonth, nextMonth: labels?.nextMonth }}
+				labels={{
+					previousMonth: labels?.previousMonth,
+					nextMonth: labels?.nextMonth,
+					previousYear: labels?.previousYear,
+					nextYear: labels?.nextYear,
+					previousYears: labels?.previousYears,
+					nextYears: labels?.nextYears
+				}}
 				onValueChange={handleRangeValueChange}
 			/>
 		{:else}
 			<Calendar
 				value={value as CalendarDate | undefined}
 				locale={resolvedLocale}
+				{granularity}
 				{defaultMonth}
 				{minValue}
 				{maxValue}
 				{isDateDisabled}
-				labels={{ previousMonth: labels?.previousMonth, nextMonth: labels?.nextMonth }}
+				labels={{
+					previousMonth: labels?.previousMonth,
+					nextMonth: labels?.nextMonth,
+					previousYear: labels?.previousYear,
+					nextYear: labels?.nextYear,
+					previousYears: labels?.previousYears,
+					nextYears: labels?.nextYears
+				}}
 				onValueChange={handleSingleValueChange}
 			/>
 		{/if}
