@@ -8,7 +8,7 @@
 <tr
 	data-selected={selected ? '' : undefined}
 	class={cn(
-		'border-b border-border transition-colors duration-150 hover:bg-surface-subtle data-selected:bg-surface-hover',
+		'group border-b border-border transition-colors duration-150 hover:bg-surface-subtle data-selected:bg-surface-hover',
 		className
 	)}
 	{...restProps}

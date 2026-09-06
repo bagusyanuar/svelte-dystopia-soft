@@ -28,8 +28,16 @@
 	function selectFirstRow() {
 		table.getRow('0').toggleSelected(true);
 	}
+
+	function pinColumn(id: string) {
+		table.getColumn(id).pin('start');
+	}
 </script>
 
 <button type="button" data-testid="sort-age" onclick={sortByAge}>Sort by age</button>
 <button type="button" data-testid="select-first" onclick={selectFirstRow}>Select first row</button>
+<button type="button" data-testid="pin-first-name" onclick={() => pinColumn('firstName')}>
+	Pin first name
+</button>
+<button type="button" data-testid="pin-age" onclick={() => pinColumn('age')}>Pin age</button>
 <DataTable {table} {...rest} />

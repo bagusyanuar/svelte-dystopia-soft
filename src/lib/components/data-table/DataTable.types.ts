@@ -13,6 +13,15 @@ export interface DataTableProps<
 > extends HTMLTableAttributes {
 	/** The instance you created yourself via `createTable()` — this component never calls it internally. */
 	table: Table<TFeatures, TData>;
+	/**
+	 * Sticks the header row to the top of the nearest scrolling ancestor —
+	 * pair with a bounded-height wrapper (e.g. `class="max-h-96 overflow-y-auto"`).
+	 * Frozen columns need no prop here: composing `columnPinningFeature` (and
+	 * `columnSizingFeature`, for correct offsets when more than one column is
+	 * pinned per side) on your own `table` makes `getIsPinned()` columns sticky
+	 * automatically, same as sorting/selection/expanding above.
+	 */
+	stickyHeader?: boolean;
 	class?: string;
 	classes?: {
 		table?: string;

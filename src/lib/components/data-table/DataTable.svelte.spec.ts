@@ -1,4 +1,6 @@
 import {
+	columnPinningFeature,
+	columnSizingFeature,
 	createExpandedRowModel,
 	createTable,
 	rowExpandingFeature,
@@ -31,6 +33,7 @@ const expandableFeatures = tableFeatures({
 	rowExpandingFeature,
 	expandedRowModel: createExpandedRowModel()
 });
+const pinnableFeatures = tableFeatures({ columnPinningFeature, columnSizingFeature });
 
 function coreInstance(data: Person[] = people) {
 	return () =>
@@ -71,6 +74,17 @@ function expandableInstance() {
 			features: expandableFeatures,
 			columns,
 			getRowCanExpand: () => true,
+			get data() {
+				return people;
+			}
+		});
+}
+
+function pinnableInstance() {
+	return () =>
+		createTable({
+			features: pinnableFeatures,
+			columns,
 			get data() {
 				return people;
 			}
@@ -182,5 +196,57 @@ describe('DataTable', () => {
 
 		expect(row.hasAttribute('data-expanded')).toBe(true);
 		await expect.element(page.getByText('Row details')).toBeInTheDocument();
+	});
+
+	it('does not stick a column when the table has no pinning feature', async () => {
+		render(DataTableFixture, { createInstance: coreInstance() });
+
+		const header = page.getByRole('columnheader', { name: 'First name' }).element();
+		expect(header.className).not.toMatch(/\bsticky\b/);
+	});
+
+	it('sticks a pinned column and its cells to the pinned edge', async () => {
+		render(DataTableFixture, { createInstance: pinnableInstance() });
+
+		const header = page.getByRole('columnheader', { name: 'First name' }).element() as HTMLElement;
+		const cell = page.getByRole('cell', { name: 'Ada' }).element() as HTMLElement;
+		expect(header.className).not.toMatch(/\bsticky\b/);
+
+		await userEvent.click(page.getByTestId('pin-first-name').element());
+
+		expect(header.className).toMatch(/\bsticky\b/);
+		expect(header.style.left).toBe('0px');
+		expect(cell.className).toMatch(/\bsticky\b/);
+		expect(cell.style.left).toBe('0px');
+	});
+
+	it('stacks the offset of a second column pinned to the same edge', async () => {
+		render(DataTableFixture, { createInstance: pinnableInstance() });
+
+		await userEvent.click(page.getByTestId('pin-first-name').element());
+		await userEvent.click(page.getByTestId('pin-age').element());
+
+		const firstNameHeader = page
+			.getByRole('columnheader', { name: 'First name' })
+			.element() as HTMLElement;
+		const ageHeader = page.getByRole('columnheader', { name: 'Age' }).element() as HTMLElement;
+
+		expect(firstNameHeader.style.left).toBe('0px');
+		expect(parseInt(ageHeader.style.left)).toBeGreaterThan(0);
+	});
+
+	it('sticks the header row to the top when `stickyHeader` is set', async () => {
+		render(DataTableFixture, { createInstance: coreInstance(), stickyHeader: true });
+
+		const header = page.getByRole('columnheader', { name: 'Age' }).element();
+		expect(header.className).toMatch(/\bsticky\b/);
+		expect(header.className).toMatch(/\btop-0\b/);
+	});
+
+	it('does not stick the header row by default', async () => {
+		render(DataTableFixture, { createInstance: coreInstance() });
+
+		const header = page.getByRole('columnheader', { name: 'Age' }).element();
+		expect(header.className).not.toMatch(/\bsticky\b/);
 	});
 });

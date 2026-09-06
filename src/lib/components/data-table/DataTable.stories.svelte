@@ -72,6 +72,8 @@
 <script lang="ts">
 	import { createRawSnippet } from 'svelte';
 	import {
+		columnPinningFeature,
+		columnSizingFeature,
 		createColumnHelper,
 		createExpandedRowModel,
 		createPaginatedRowModel,
@@ -243,6 +245,60 @@
 		},
 		initialState: { pagination: { pageIndex: 0, pageSize: 5 } }
 	});
+
+	type WideInvoice = Invoice & { email: string; phone: string; region: string };
+
+	const wideInvoices: WideInvoice[] = invoices.map((invoice, i) => ({
+		...invoice,
+		email: `${invoice.customer.toLowerCase().replace(' ', '.')}@example.com`,
+		phone: `+1 555-01${String(i).padStart(2, '0')}`,
+		region: ['North America', 'Europe', 'Asia'][i % 3]
+	}));
+
+	const frozenFeatures = tableFeatures({ columnPinningFeature, columnSizingFeature });
+	const frozenColumnHelper = createColumnHelper<typeof frozenFeatures, WideInvoice>();
+	const frozenColumns = frozenColumnHelper.columns([
+		frozenColumnHelper.accessor('id', { header: 'Invoice', size: 100 }),
+		frozenColumnHelper.accessor('customer', { header: 'Customer', size: 160 }),
+		frozenColumnHelper.accessor('email', { header: 'Email', size: 220 }),
+		frozenColumnHelper.accessor('phone', { header: 'Phone', size: 160 }),
+		frozenColumnHelper.accessor('region', { header: 'Region', size: 140 }),
+		frozenColumnHelper.accessor('status', { header: 'Status', size: 120 }),
+		frozenColumnHelper.accessor('amount', {
+			header: 'Amount',
+			size: 120,
+			cell: (ctx) => `$${ctx.getValue()}.00`
+		})
+	]);
+	const frozenTable = createTable({
+		features: frozenFeatures,
+		columns: frozenColumns,
+		get data() {
+			return wideInvoices;
+		},
+		// Two columns pinned to `start` demonstrates the offsets stacking —
+		// `customer` sits after `id`'s own width, not on top of it.
+		initialState: { columnPinning: { start: ['id', 'customer'], end: ['amount'] } }
+	});
+
+	const stickyHeaderFeatures = tableFeatures({});
+	const stickyHeaderColumnHelper = createColumnHelper<typeof stickyHeaderFeatures, Invoice>();
+	const stickyHeaderColumns = stickyHeaderColumnHelper.columns([
+		stickyHeaderColumnHelper.accessor('id', { header: 'Invoice' }),
+		stickyHeaderColumnHelper.accessor('customer', { header: 'Customer' }),
+		stickyHeaderColumnHelper.accessor('status', { header: 'Status' }),
+		stickyHeaderColumnHelper.accessor('amount', {
+			header: 'Amount',
+			cell: (ctx) => `$${ctx.getValue()}.00`
+		})
+	]);
+	const stickyHeaderTable = createTable({
+		features: stickyHeaderFeatures,
+		columns: stickyHeaderColumns,
+		get data() {
+			return manyInvoices;
+		}
+	});
 </script>
 
 <Story name="Default" asChild>
@@ -300,7 +356,7 @@
 		docs: {
 			description: {
 				story:
-					"`DataTable` owns no expanding state — this table composes `rowExpandingFeature` + `createExpandedRowModel()` itself via `createTable()`, and sets `getRowCanExpand: () => true` so every row qualifies. Instead of a dedicated toggle button, `DataTable` makes the whole row clickable (and focusable/Enter-Space-able) whenever `row.getCanExpand()` is true, toggling `row.toggleExpanded()`; the `expandedRow` snippet then renders as a full-width row beneath it while `row.getIsExpanded()` is true. A row from a table without the expanding feature composed (every other story on this page) is left exactly as before — not focusable, not clickable."
+					'`DataTable` owns no expanding state — this table composes `rowExpandingFeature` + `createExpandedRowModel()` itself via `createTable()`, and sets `getRowCanExpand: () => true` so every row qualifies. Instead of a dedicated toggle button, `DataTable` makes the whole row clickable (and focusable/Enter-Space-able) whenever `row.getCanExpand()` is true, toggling `row.toggleExpanded()`; the `expandedRow` snippet then renders as a full-width row beneath it while `row.getIsExpanded()` is true. A row from a table without the expanding feature composed (every other story on this page) is left exactly as before — not focusable, not clickable.'
 			}
 		}
 	}}
@@ -341,5 +397,39 @@
 >
 	<div class="w-160">
 		<DataTable table={basicTable} />
+	</div>
+</Story>
+
+<Story
+	name="Frozen columns"
+	asChild
+	parameters={{
+		docs: {
+			description: {
+				story:
+					"Frozen columns need no `DataTable` prop — composing `columnPinningFeature` on your own `table` is what makes a column stick, exactly like sorting/selection above. Here `initialState.columnPinning` pins `id` and `customer` to `start` and `amount` to `end`; scroll the table sideways and all three stay put while `email`, `phone`, `region`, and `status` scroll underneath. Pinning more than one column per side needs `columnSizingFeature` too — its `column.getSize()`/`getStart()`/`getAfter()` are what let `DataTable` stack the second pinned column's offset after the first one's width instead of on top of it, and the same sizes are applied as each cell's `width` so the rendered columns line up with those offsets (`DataTable` switches the table to `table-layout: fixed` for this automatically once it detects the sizing feature)."
+			}
+		}
+	}}
+>
+	<div class="w-160">
+		<DataTable table={frozenTable} />
+	</div>
+</Story>
+
+<Story
+	name="Sticky header"
+	asChild
+	parameters={{
+		docs: {
+			description: {
+				story:
+					'Set `stickyHeader` and pass a bounded-height, scrollable `class` (`"max-h-72 overflow-y-auto"` here) — that class lands on `Table`\'s own scroll wrapper, the nearest scrolling ancestor the header cells stick to, so the header row stays pinned to its top as the body scrolls past underneath. (Wrapping `DataTable` in a *separate* height-bounded `<div>` instead would not work: `Table`\'s wrapper already sets `overflow-x-auto`, which the CSS spec computes as `overflow-y: auto` too, making it — not an outer `<div>` — the nearest scrolling ancestor sticky resolves against.) Combine this with frozen columns (composing `columnPinningFeature` on the `table`, as in the "Frozen columns" story) and the top corner cells stay correctly on top of both the scrolling rows and the scrolling columns.'
+			}
+		}
+	}}
+>
+	<div class="w-160">
+		<DataTable table={stickyHeaderTable} stickyHeader class="max-h-72 overflow-y-auto" />
 	</div>
 </Story>

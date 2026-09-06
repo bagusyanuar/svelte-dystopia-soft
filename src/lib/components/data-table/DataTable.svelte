@@ -14,6 +14,7 @@
 
 	let {
 		table,
+		stickyHeader = false,
 		class: className,
 		classes,
 		labels,
@@ -24,13 +25,39 @@
 	}: DataTableProps<TFeatures, TData> = $props();
 
 	const rows = $derived(table.getRowModel().rows);
+	// `columnSizingFeature` composed means every column has a known pixel width — required
+	// for a pinned column's `left`/`right` offset (below) to line up with what actually renders.
+	const sizingEnabled = $derived('getCenterTotalSize' in table);
 
 	function toggleRowExpanded(row: (typeof rows)[number]) {
 		if ('toggleExpanded' in row) row.toggleExpanded();
 	}
+
+	function columnStyle(column: object, pinned: 'start' | 'end' | false) {
+		const parts: string[] = [];
+		if ('getSize' in column) {
+			parts.push(`width: ${(column as { getSize: () => number }).getSize()}px;`);
+		}
+		if (pinned && 'getStart' in column) {
+			const sizedColumn = column as {
+				getStart: (position: 'start') => number;
+				getAfter: (position: 'end') => number;
+			};
+			parts.push(
+				pinned === 'start'
+					? `left: ${sizedColumn.getStart('start')}px;`
+					: `right: ${sizedColumn.getAfter('end')}px;`
+			);
+		}
+		return parts.length ? parts.join(' ') : undefined;
+	}
 </script>
 
-<Table class={className} classes={{ table: classes?.table }} {...restProps}>
+<Table
+	class={className}
+	classes={{ table: cn(classes?.table, sizingEnabled && 'table-fixed') }}
+	{...restProps}
+>
 	{#if caption}
 		<TableCaption>{@render caption()}</TableCaption>
 	{/if}
@@ -40,8 +67,17 @@
 				{#each headerGroup.headers as header (header.id)}
 					{@const sortable = 'getCanSort' in header.column ? header.column.getCanSort() : false}
 					{@const sorted = 'getIsSorted' in header.column ? header.column.getIsSorted() : false}
+					{@const pinned = 'getIsPinned' in header.column ? header.column.getIsPinned() : false}
 					<TableHead
-						class={classes?.head}
+						class={cn(
+							classes?.head,
+							(pinned || stickyHeader) && 'sticky bg-surface-subtle',
+							stickyHeader && 'top-0',
+							pinned && stickyHeader ? 'z-30' : stickyHeader ? 'z-20' : pinned ? 'z-10' : undefined,
+							pinned === 'start' && 'border-r border-border',
+							pinned === 'end' && 'border-l border-border'
+						)}
+						style={columnStyle(header.column, pinned)}
 						aria-sort={sortable
 							? sorted === 'asc'
 								? 'ascending'
@@ -95,7 +131,17 @@
 						: undefined}
 				>
 					{#each cells as cell (cell.id)}
-						<TableCell class={classes?.cell}>
+						{@const pinned = 'getIsPinned' in cell.column ? cell.column.getIsPinned() : false}
+						<TableCell
+							class={cn(
+								classes?.cell,
+								pinned && 'sticky z-10 bg-surface group-hover:bg-surface-subtle',
+								pinned && selected && 'bg-surface-hover',
+								pinned === 'start' && 'border-r border-border',
+								pinned === 'end' && 'border-l border-border'
+							)}
+							style={columnStyle(cell.column, pinned)}
+						>
 							<FlexRender {cell} />
 						</TableCell>
 					{/each}
