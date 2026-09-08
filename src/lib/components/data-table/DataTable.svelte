@@ -36,7 +36,8 @@
 	function columnStyle(column: object, pinned: 'start' | 'end' | false) {
 		const parts: string[] = [];
 		if ('getSize' in column) {
-			parts.push(`width: ${(column as { getSize: () => number }).getSize()}px;`);
+			const sizedColumn = column as { getSize: () => number };
+			parts.push(`width: ${sizedColumn.getSize()}px;`);
 		}
 		if (pinned && 'getStart' in column) {
 			const sizedColumn = column as {
