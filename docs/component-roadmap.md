@@ -300,9 +300,15 @@ Beda dari komponen lain: perlu provider/singleton store, jadi tidak murni subpat
 - **API imperatif + komponen siap-pakai** — `<Toaster />` dipasang sekali di root app (mis. `+layout.svelte` konsumen), lalu `toast.message/success/warning/danger(title, options?)` dipanggil dari mana saja (event handler, `catch` block, dll). Store singleton module-level (`toast-store.svelte.ts`, pakai `$state` bukan Svelte store klasik) nge-drive keduanya. Alternatif yang ditolak: store-only tanpa UI siap-pakai (headless total) — ditolak karena tiap konsumen harus bikin ulang stacking/animasi/a11y dari nol, beda dari pola alert/dialog yang udah ada.
 - **Posisi default `bottom-right`**, configurable lewat prop `position` (6 corner).
 - **Auto-dismiss 5 detik, max 3 toast visible, pause-on-hover.** Toast di atas batas `max` nunggu (gak langsung dibuang) — baru render begitu ada slot kosong, dan timer-nya baru mulai jalan begitu dia visible (bukan dari saat di-queue).
-- Variant toast pakai token yang sama kayak `alert` (`default`/`danger`/`warning`/`success`) — gak ada token baru.
+- Variant toast pakai token yang sama kayak `alert` (`default`/`danger`/`warning`/`success`), plus penambahan `info` (`text-info`) independen dari brand.
+- Mendukung icon indikator otomatis ala Linear (check circle untuk success, alert circle untuk danger, alert triangle untuk warning, info circle untuk info), custom icon snippet, serta opsi `{ icon: false }` untuk menonaktifkan icon.
+- Border toast netral (`border-border`) untuk seluruh variant agar tampilan tenang dan rapi ala Linear app.
 - Reuse primitive yang sudah ada: `portal` (viewport keluar tree) dan `createPresence` (tunda unmount sampai exit animation kelar), pola sama kayak `dialog`/`popover`. Default animation lewat `@layer components` + `data-slot='toast'`, pola sama kayak dialog (lihat catatan animation di atas).
 - Timer per-toast dijadwalin sinkron di top-level script komponen (bukan di dalam `$effect` tanpa dependency), dibersihkan lewat `onDestroy` — kalau dipindah ke `$effect` malah bikin race di test browser (lihat catatan testing di bawah).
+
+### Rencana Selanjutnya: `ThemeProvider` & Kustomisasi Warna Bebas (Primary & Accent)
+
+Perencanaan lengkap untuk komponen `<ThemeProvider />`, custom brand color generator (HEX/OKLCH), auto-contrast WCAG AA, dan pemisahan token `primary` vs `accent` telah didokumentasikan secara detail di [theme-provider-planning.md](./theme-provider-planning.md).
 
 ### Testing timer real-time itu gak reliable di browser test project ini
 

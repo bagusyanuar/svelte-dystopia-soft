@@ -11,6 +11,7 @@ export interface ToasterProps {
 	classes?: {
 		viewport?: string;
 		item?: string;
+		icon?: string;
 		title?: string;
 		description?: string;
 		close?: string;

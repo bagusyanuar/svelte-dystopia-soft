@@ -103,9 +103,9 @@ The brand accent is Tailwind's **teal**, set on `--primary` / `--primary-hover` 
 | ----- | ----------------- | -------- | ---------------------------- |
 | light | `--primary`       | teal-700 | 5.39:1 vs white text — AA ✓  |
 | light | `--primary-hover` | teal-800 | 7.53:1 vs white text         |
-| dark  | `--primary`       | teal-400 | 10.81:1 vs dark surface text |
-| dark  | `--primary-hover` | teal-300 | 13.71:1 vs dark surface text |
+| dark  | `--primary`       | teal-solid | 5.39:1 vs white text — AA ✓  |
+| dark  | `--primary-hover` | teal-solid-hover | 4.8:1 vs white text — AA ✓  |
 
-`teal-500` reaches only **2.42:1** against white and `teal-600` only **3.66:1** — both fail WCAG AA's 4.5:1 for button text, even though they read as the more "obviously teal" choice. Light and dark also invert deliberately: light is a dark fill with white text, dark is a light fill with dark text.
+Both light and dark maintain solid fills with crisp white text (`oklch(100% 0 0)`), avoiding washed-out/bleached pastels on hover while fully clearing WCAG AA contrast.
 
 If the brand color ever changes again, re-run the contrast math before picking stops rather than matching by eye, and update both the `:root` and `[data-theme='dark']` blocks. Nothing in any component changes.

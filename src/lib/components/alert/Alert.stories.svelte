@@ -2,10 +2,44 @@
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import Alert from './Alert.svelte';
 
+	const componentDescription = [
+		'Komponen alert/banner notifikasi kontekstual dengan estetika **SaaS Compact Minimalist** (terinspirasi dari Linear). Memiliki integrasi aksesibilitas ARIA, visual tone feedback, serta hierarki props semi-headless yang fleksibel.',
+		'',
+		'### Fitur Utama',
+		'- **4 Varian Semantik**: `default` (informasi netral), `danger` (kesalahan kritis & gagal bayar), `warning` (peringatan batas kuota), dan `success` (konfirmasi berhasil).',
+		'- **Struktur Modular Semi-Headless**: Memisahkan bagian konten menjadi snippet opsional: `icon`, `title`, `description`, serta `children` (untuk call-to-action button atau link aksi).',
+		'- **Snippet Context Payload**: Meneruskan `{ variant }` ke seluruh snippet (`icon`, `title`, `description`, `children`) untuk mempermudah rendering dinamis berdasarkan varian aktif.',
+		'- **Sub-part Styling via `classes`**: Mendukung penyesuaian class granular untuk setiap sub-bagian: `classes.icon`, `classes.title`, `classes.description`, dan wrapper layout `classes.content`.',
+		'- **State via Data Attributes**: Mengekspos atribut `data-variant` langsung pada root DOM element untuk mempermudah targeting selector CSS kustom (`[data-variant="danger"]`).',
+		'- **Aksesibilitas & DOM Ref**: Default `role="alert"` dengan isolasi assistive technology pada ikon (`aria-hidden="true"`), dukungan override atribut via `...restProps`, serta eksposisi DOM ref via `$bindable(ref)`.'
+	].join('\n');
+
 	const { Story } = defineMeta({
 		title: 'Components/Alert',
 		component: Alert,
-		tags: ['autodocs']
+		tags: ['autodocs'],
+		parameters: {
+			docs: {
+				description: {
+					component: componentDescription
+				}
+			}
+		},
+		argTypes: {
+			variant: {
+				control: 'select',
+				options: ['default', 'danger', 'warning', 'success'],
+				description: 'Varian semantik gaya visual alert.'
+			},
+			class: {
+				control: 'text',
+				description: 'Class override atau tambahan pada elemen container root alert.'
+			},
+			classes: {
+				control: 'object',
+				description: 'Class override untuk sub-bagian internal: icon, title, description, content.'
+			}
+		}
 	});
 </script>
 
@@ -153,6 +187,37 @@
 			{#snippet description()}
 				Styled via the class and classes props — overriding the background means the title and
 				description colors need to follow, since they don't inherit it automatically.
+			{/snippet}
+		</Alert>
+	</div>
+</Story>
+
+<Story name="Dynamic snippet payload" asChild>
+	<div class="w-96 space-y-4">
+		<Alert variant="danger">
+			{#snippet icon({ variant })}
+				<span class="rounded bg-danger/10 px-1 py-0.5 text-xs font-semibold uppercase">
+					{variant}
+				</span>
+			{/snippet}
+			{#snippet title({ variant })}
+				Action required: {variant}
+			{/snippet}
+			{#snippet description()}
+				Snippets receive <code>&#123; variant &#125;</code> as context for dynamic rendering.
+			{/snippet}
+		</Alert>
+		<Alert variant="success">
+			{#snippet icon({ variant })}
+				<span class="rounded bg-success/10 px-1 py-0.5 text-xs font-semibold uppercase">
+					{variant}
+				</span>
+			{/snippet}
+			{#snippet title({ variant })}
+				Operation result: {variant}
+			{/snippet}
+			{#snippet description()}
+				Snippets adapt seamlessly to whatever variant is currently set on the component.
 			{/snippet}
 		</Alert>
 	</div>

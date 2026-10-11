@@ -13,14 +13,18 @@
 		isLoading = false,
 		loading,
 		disabled = false,
+		type,
 		...restProps
 	}: ButtonProps = $props();
 
 	const mergedProps = $derived({
+		...(child ? (type ? { type } : {}) : { type: type ?? 'button' }),
 		...restProps,
 		class: cn(buttonVariants({ variant, size }), className),
 		disabled: disabled || isLoading,
-		'aria-busy': isLoading || undefined
+		'aria-busy': isLoading || undefined,
+		'data-loading': isLoading ? '' : undefined,
+		'data-disabled': disabled || isLoading ? '' : undefined
 	});
 </script>
 
@@ -42,6 +46,6 @@
 				{@render defaultLoading()}
 			{/if}
 		{/if}
-		{@render children()}
+		{@render children?.()}
 	</button>
 {/if}

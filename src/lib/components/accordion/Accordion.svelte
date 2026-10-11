@@ -4,6 +4,7 @@
 	import type { AccordionProps } from './Accordion.types.js';
 
 	let {
+		ref = $bindable(null),
 		type = 'single',
 		value = $bindable(),
 		class: className,
@@ -34,6 +35,11 @@
 	setAccordionContext({ baseId, isOpen, toggle });
 </script>
 
-<div class={cn('overflow-hidden rounded-lg border border-border', className)} {...restProps}>
+<div
+	bind:this={ref}
+	data-type={type}
+	class={cn('overflow-hidden rounded-lg border border-border', className)}
+	{...restProps}
+>
 	{@render children()}
 </div>

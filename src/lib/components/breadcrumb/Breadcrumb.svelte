@@ -1,9 +1,15 @@
 <script lang="ts">
+	import { cn } from '../../utils/cn.js';
 	import type { BreadcrumbProps } from './Breadcrumb.types.js';
 
-	let { class: className, children, ...restProps }: BreadcrumbProps = $props();
+	let {
+		class: className,
+		ref = $bindable(null),
+		children,
+		...restProps
+	}: BreadcrumbProps = $props();
 </script>
 
-<nav aria-label="breadcrumb" class={className} {...restProps}>
-	{@render children()}
+<nav bind:this={ref} aria-label="breadcrumb" class={cn(className)} {...restProps}>
+	{@render children?.()}
 </nav>

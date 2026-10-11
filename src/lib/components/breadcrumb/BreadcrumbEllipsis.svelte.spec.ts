@@ -6,7 +6,7 @@ import BreadcrumbEllipsis from './BreadcrumbEllipsis.svelte';
 import EllipsisBindingHarness from './EllipsisBindingHarness.spec.svelte';
 
 const content = createRawSnippet(() => ({
-	render: () => `<a href="/library">Library</a><a href="/data">Data</a>`
+	render: () => `<div><a href="/library">Library</a><a href="/data">Data</a></div>`
 }));
 
 describe('BreadcrumbEllipsis.svelte', () => {
@@ -61,5 +61,18 @@ describe('BreadcrumbEllipsis.svelte', () => {
 
 		const panel = page.getByRole('dialog').element();
 		expect(panel.className).toContain('rounded-none');
+	});
+
+	it('allows replacing the trigger icon via trigger snippet', async () => {
+		const customTrigger = createRawSnippet<[{ open: boolean }]>((getArgs) => ({
+			render: () => {
+				const { open } = getArgs();
+				return `<span data-testid="custom-trigger">${open ? 'Hide' : 'Expand'}</span>`;
+			}
+		}));
+
+		render(BreadcrumbEllipsis, { children: content, trigger: customTrigger });
+
+		await expect.element(page.getByTestId('custom-trigger')).toHaveTextContent('Expand');
 	});
 });

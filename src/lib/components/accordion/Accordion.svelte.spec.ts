@@ -6,6 +6,7 @@ import Accordion from './Accordion.svelte';
 import AccordionHarness from './AccordionHarness.spec.svelte';
 import MultipleHarness from './MultipleHarness.spec.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import HeadlessHarness from './HeadlessHarness.spec.svelte';
 
 const text = createRawSnippet(() => ({
 	render: () => '<span>Content</span>'
@@ -109,6 +110,21 @@ describe('Accordion family — single mode (default)', () => {
 
 		await expect.element(page.getByTestId('outer-value')).toHaveTextContent('item-1');
 	});
+
+	it('does not apply inner rounded classes to trigger headers so items remain flush', async () => {
+		render(AccordionHarness);
+
+		const trigger1 = page
+			.getByRole('button', { name: "What's included in the Pro plan?" })
+			.element();
+		const trigger2 = page.getByRole('button', { name: 'Can I cancel anytime?' }).element();
+
+		// Custom classes should still pass, but default classes shouldn't include rounded-md or rounded-t-md
+		expect(trigger1.className).not.toContain('rounded-md');
+		expect(trigger1.className).not.toContain('rounded-t-md');
+		expect(trigger2.className).not.toContain('rounded-md');
+		expect(trigger2.className).not.toContain('rounded-t-md');
+	});
 });
 
 describe('Accordion family — multiple mode', () => {
@@ -137,5 +153,53 @@ describe('Accordion family — multiple mode', () => {
 		await expect
 			.element(page.getByRole('button', { name: 'First' }))
 			.toHaveAttribute('aria-expanded', 'false');
+	});
+});
+
+describe('Accordion family — headless composition & customization', () => {
+	it('supports DOM refs for root accordion, item wrapper, and trigger button', async () => {
+		render(HeadlessHarness);
+
+		await expect.element(page.getByTestId('has-accordion-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-item-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-trigger-ref')).toHaveTextContent('yes');
+	});
+
+	it('reflects data-state and data-disabled on item root wrapper', async () => {
+		render(HeadlessHarness);
+
+		const trigger1 = page.getByRole('button', { name: /Expanded/ }).element();
+		const item1 = trigger1.closest('div[data-state]');
+		expect(item1?.getAttribute('data-state')).toBe('open');
+		expect(item1?.hasAttribute('data-disabled')).toBe(false);
+
+		const trigger2 = page.getByRole('button', { name: /Disabled Item/ }).element();
+		const item2 = trigger2.closest('div[data-state]');
+		expect(item2?.getAttribute('data-state')).toBe('closed');
+		expect(item2?.getAttribute('data-disabled')).toBe('');
+	});
+
+	it('forwards open state to trigger and children snippets', async () => {
+		render(HeadlessHarness);
+
+		await expect.element(page.getByTestId('trigger-text')).toHaveTextContent('Expanded');
+		await expect.element(page.getByTestId('content-text')).toHaveTextContent('Open Content');
+		await expect.element(page.getByTestId('custom-indicator')).toHaveTextContent('[-]');
+
+		// Toggle item-1 closed
+		await page.getByRole('button', { name: /Expanded/ }).click();
+
+		await expect.element(page.getByTestId('trigger-text')).toHaveTextContent('Collapsed');
+		await expect.element(page.getByTestId('custom-indicator')).toHaveTextContent('[+]');
+	});
+
+	it('supports classes.panel for transition container', async () => {
+		render(HeadlessHarness);
+
+		const trigger1 = page.getByRole('button', { name: /Expanded/ }).element();
+		const controlsId = trigger1.getAttribute('aria-controls');
+		const panel = document.getElementById(controlsId!);
+
+		expect(panel?.className).toContain('custom-panel-class');
 	});
 });

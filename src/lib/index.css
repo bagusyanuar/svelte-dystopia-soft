@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 /*
   Theme tokens.
 
@@ -66,15 +68,22 @@
 	--success: oklch(50% 0.16 145);
 	--success-border: oklch(82% 0.1 145);
 	--success-foreground: oklch(100% 0 0);
+
+	/* Info blue. 52% lightness clears 4.5:1 against white while maintaining
+	   a clear, standard blue distinct from danger red and brand accent. */
+	--info: oklch(52% 0.18 250);
+	--info-border: oklch(82% 0.1 250);
+	--info-foreground: oklch(100% 0 0);
 }
 
 [data-theme='dark'] {
-	--surface: oklch(12.9% 0.042 264.695);
-	--surface-subtle: oklch(20.8% 0.042 265.755);
-	--surface-hover: oklch(27.9% 0.041 260.031);
+	/* Doff / matte dark palette (Google Dark style #202124 / #303134) */
+	--surface: oklch(23.5% 0.007 260);
+	--surface-subtle: oklch(28.5% 0.009 260);
+	--surface-hover: oklch(33.5% 0.012 260);
 
-	--border: oklch(27.9% 0.041 260.031);
-	--border-hover: oklch(37.2% 0.044 257.287);
+	--border: oklch(34.5% 0.012 260);
+	--border-hover: oklch(43.5% 0.015 260);
 
 	--foreground: oklch(98.4% 0.003 247.858);
 	--foreground-soft: oklch(92.9% 0.013 255.508);
@@ -82,13 +91,12 @@
 	--foreground-subtle: oklch(70.4% 0.04 256.788);
 	--foreground-faint: oklch(55.4% 0.046 257.417);
 
-	/* Dark flips the relationship: a light teal fill carrying dark text.
-	   teal-400 against the dark surface is 10.81:1. */
-	--primary: oklch(77.7% 0.152 181.912);
-	--primary-hover: oklch(85.5% 0.138 181.071);
-	--primary-foreground: oklch(12.9% 0.042 264.695);
+	/* Dark: solid vibrant teal fill with white text (Linear style). */
+	--primary: oklch(51.1% 0.12 186.391);
+	--primary-hover: oklch(56% 0.13 186.391);
+	--primary-foreground: oklch(100% 0 0);
 
-	--ring: oklch(77.7% 0.152 181.912);
+	--ring: oklch(56% 0.13 186.391);
 
 	--danger: oklch(71.2% 0.194 13.428);
 	--danger-border: oklch(64.5% 0.246 16.439);
@@ -103,6 +111,11 @@
 	--success: oklch(64% 0.15 145);
 	--success-border: oklch(57% 0.19 145);
 	--success-foreground: oklch(12.9% 0.042 264.695);
+
+	/* 70% lightness against the dark surface is 6.42:1. */
+	--info: oklch(70% 0.16 250);
+	--info-border: oklch(60% 0.18 250);
+	--info-foreground: oklch(12.9% 0.042 264.695);
 }
 
 @theme inline {
@@ -136,6 +149,10 @@
 	--color-success: var(--success);
 	--color-success-border: var(--success-border);
 	--color-success-foreground: var(--success-foreground);
+
+	--color-info: var(--info);
+	--color-info-border: var(--info-border);
+	--color-info-foreground: var(--info-foreground);
 }
 
 /*

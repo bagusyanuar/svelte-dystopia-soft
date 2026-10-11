@@ -8,6 +8,7 @@
 		open = $bindable(false),
 		placement = 'bottom-start',
 		labels,
+		trigger: triggerSnippet,
 		children,
 		...restProps
 	}: BreadcrumbEllipsisProps = $props();
@@ -26,12 +27,16 @@
 	}}
 >
 	{#snippet trigger()}
-		<span class="sr-only">{labels?.more ?? 'More'}</span>
-		<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
-			<circle cx="5" cy="12" r="1.5" />
-			<circle cx="12" cy="12" r="1.5" />
-			<circle cx="19" cy="12" r="1.5" />
-		</svg>
+		{#if triggerSnippet}
+			{@render triggerSnippet({ open })}
+		{:else}
+			<span class="sr-only">{labels?.more ?? 'More'}</span>
+			<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
+				<circle cx="5" cy="12" r="1.5" />
+				<circle cx="12" cy="12" r="1.5" />
+				<circle cx="19" cy="12" r="1.5" />
+			</svg>
+		{/if}
 	{/snippet}
 	{@render children()}
 </Popover>

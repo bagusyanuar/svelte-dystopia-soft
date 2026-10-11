@@ -3,10 +3,40 @@
 	import ButtonGroup from './ButtonGroup.svelte';
 	import Button from '../button/Button.svelte';
 
+	const componentDescription = [
+		'Komponen kontainer grup tombol interaktif dengan estetika **SaaS Compact Minimalist** (terinspirasi dari Linear). Menggabungkan beberapa tombol menjadi satu kesatuan visual yang solid dengan penanganan border-collapse otomatis, perataan sudut internal (*corner flattening*), dan elevasi z-index saat hover atau focus.',
+		'',
+		'### Fitur Utama',
+		'- **Border Collapsing & Corner Management**: Menggabungkan border berdekatan (`-ml-px` untuk horizontal, `-mt-px` untuk vertical) sehingga ketebalan border tetap 1px seragam, mempertahankan kelengkungan sudut terluar (`rounded-l-md` / `rounded-r-md`), dan meratakan sudut internal menjadi `rounded-none`.',
+		'- **Elevasi Fokus & Hover Z-Index**: Elemen tombol yang sedang aktif, di-hover, atau difokuskan secara otomatis dinaikkan ke atas layer (`z-10`) agar garis border atau focus ring tidak terpotong oleh tombol tetangga.',
+		'- **Dua Arah Orientasi (`orientation`)**: Mendukung tata letak `horizontal` (default baris) dan `vertical` (kolom bertumpuk) dengan penyesuaian sudut dinamis.',
+		'- **State via Data Attributes**: Mengekspos atribut `data-orientation="horizontal | vertical"` langsung pada elemen `<div role="group">` untuk mempermudah targeting selector CSS.',
+		'- **Akses DOM Ref**: Mendukung `ref = $bindable(null)` untuk manajemen fokus keyboard (seperti roving tabindex) atau pengukuran layout.',
+		'- **Snippet State Payload**: Meneruskan `{ orientation }` ke snippet `children`.'
+	].join('\n');
+
 	const { Story } = defineMeta({
 		title: 'Components/ButtonGroup',
 		component: ButtonGroup,
-		tags: ['autodocs']
+		tags: ['autodocs'],
+		parameters: {
+			docs: {
+				description: {
+					component: componentDescription
+				}
+			}
+		},
+		argTypes: {
+			orientation: {
+				control: 'inline-radio',
+				options: ['horizontal', 'vertical'],
+				description: 'Arah susunan tombol di dalam grup: horizontal (baris) atau vertical (kolom).'
+			},
+			class: {
+				control: 'text',
+				description: 'Class override atau tambahan pada container grup tombol.'
+			}
+		}
 	});
 </script>
 
@@ -93,5 +123,36 @@
 		<Button variant="outline" size="sm" class="px-2.5" aria-label="Underline">
 			{@render underlineIcon()}
 		</Button>
+	</ButtonGroup>
+</Story>
+
+<Story name="Split button" asChild>
+	<ButtonGroup aria-label="Publish options">
+		<Button>Publish post</Button>
+		<Button class="px-2" aria-label="More publishing actions">
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="size-4"
+				aria-hidden="true"
+			>
+				<path d="m6 9 6 6 6-6" />
+			</svg>
+		</Button>
+	</ButtonGroup>
+</Story>
+
+<Story name="Dynamic snippet payload" asChild>
+	<ButtonGroup aria-label="Orientation payload demo">
+		{#snippet children({ orientation })}
+			<Button variant="outline">
+				Orientation: {orientation}
+			</Button>
+			<Button variant="outline">Item 2</Button>
+		{/snippet}
 	</ButtonGroup>
 </Story>

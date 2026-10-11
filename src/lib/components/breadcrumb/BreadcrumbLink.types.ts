@@ -3,7 +3,9 @@ import type { HTMLAnchorAttributes } from 'svelte/elements';
 
 export interface BreadcrumbLinkProps extends Omit<HTMLAnchorAttributes, 'children' | 'class'> {
 	class?: string;
-	children: Snippet;
+	/** Reference to the root `<a>` element (when child snippet is not used) */
+	ref?: HTMLAnchorElement | null;
+	children?: Snippet;
 	/** Renders a consumer-supplied element (e.g. a router `Link`) instead of a plain `<a>`. */
 	child?: Snippet<[{ props: Record<string, unknown> }]>;
 }

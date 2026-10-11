@@ -3,5 +3,7 @@ import type { HTMLAttributes } from 'svelte/elements';
 
 export interface BreadcrumbListProps extends Omit<HTMLAttributes<HTMLOListElement>, 'children'> {
 	class?: string;
-	children: Snippet;
+	/** Reference to the root `<ol>` element */
+	ref?: HTMLOListElement | null;
+	children?: Snippet;
 }

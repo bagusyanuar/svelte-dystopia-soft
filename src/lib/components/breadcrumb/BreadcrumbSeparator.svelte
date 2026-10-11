@@ -2,10 +2,16 @@
 	import { cn } from '../../utils/cn.js';
 	import type { BreadcrumbSeparatorProps } from './BreadcrumbSeparator.types.js';
 
-	let { class: className, children, ...restProps }: BreadcrumbSeparatorProps = $props();
+	let {
+		class: className,
+		ref = $bindable(null),
+		children,
+		...restProps
+	}: BreadcrumbSeparatorProps = $props();
 </script>
 
 <li
+	bind:this={ref}
 	role="presentation"
 	aria-hidden="true"
 	class={cn('text-foreground-faint [&_svg]:size-3.5', className)}

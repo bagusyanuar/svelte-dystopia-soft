@@ -31,3 +31,158 @@ body,
 	background-color: var(--surface);
 	color: var(--foreground);
 }
+
+/*
+  Docs page dark theming:
+  When `data-theme="dark"` is active on <html>, theme the entire Storybook Docs wrapper,
+  typography, tables, code blocks, and controls to match the library's dark mode tokens.
+*/
+html[data-theme='dark'] .sbdocs.sbdocs-wrapper {
+	background-color: var(--surface) !important;
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .sbdocs.sbdocs-content {
+	color: var(--foreground) !important;
+}
+
+/* Headings & Typography in Docs Prose (strictly scoped to documentation, never leaking into .docs-story) */
+html[data-theme='dark'] .sbdocs-title,
+html[data-theme='dark'] .sbdocs-subtitle,
+html[data-theme='dark'] .sbdocs-content h1:not(.docs-story h1):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content h2:not(.docs-story h2):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content h3:not(.docs-story h3):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content h4:not(.docs-story h4):not(.docs-story *) {
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .sbdocs-content p:not(.docs-story p):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content li:not(.docs-story li):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content ul:not(.docs-story ul):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content ol:not(.docs-story ol):not(.docs-story *) {
+	color: var(--foreground-subtle) !important;
+}
+
+html[data-theme='dark'] .sbdocs-content strong:not(.docs-story strong):not(.docs-story *),
+html[data-theme='dark'] .sbdocs-content b:not(.docs-story b):not(.docs-story *) {
+	color: var(--foreground) !important;
+}
+
+/* Links in documentation prose only — never inside component preview (.docs-story) */
+html[data-theme='dark'] .sbdocs-content a:not(.docs-story a):not(.docs-story *) {
+	color: var(--primary) !important;
+}
+
+html[data-theme='dark'] .sbdocs hr {
+	border-color: var(--border) !important;
+}
+
+/* Inline code in Docs prose only — never inside component preview (.docs-story) */
+html[data-theme='dark'] .sbdocs-content code:not(.docs-story code):not(.docs-story *) {
+	background-color: var(--surface-subtle) !important;
+	color: var(--foreground) !important;
+	border: 1px solid var(--border-subtle) !important;
+}
+
+html[data-theme='dark'] .docblock-source {
+	background-color: var(--surface-subtle) !important;
+	border: 1px solid var(--border) !important;
+}
+
+html[data-theme='dark'] .docblock-source pre {
+	background-color: transparent !important;
+	color: var(--foreground) !important;
+}
+
+/* Story Canvas and Preview blocks */
+html[data-theme='dark'] .docblock-canvas {
+	background-color: var(--surface) !important;
+	border: 1px solid var(--border) !important;
+}
+
+html[data-theme='dark'] .sbdocs-preview {
+	border-color: var(--border) !important;
+}
+
+/* Storybook Docs UI buttons (Show code, Copy code) — never target .docs-story */
+html[data-theme='dark'] .docblock-code-toggle,
+html[data-theme='dark'] .docblock-canvas-toolbar button {
+	color: var(--foreground-subtle) !important;
+}
+
+html[data-theme='dark'] .docblock-code-toggle:hover,
+html[data-theme='dark'] .docblock-canvas-toolbar button:hover {
+	color: var(--foreground) !important;
+}
+
+/* Controls / ArgsTable */
+html[data-theme='dark'] .docblock-argstable,
+html[data-theme='dark'] table.docblock-argstable {
+	background-color: var(--surface) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable thead tr,
+html[data-theme='dark'] .docblock-argstable thead tr th {
+	background-color: var(--surface-subtle) !important;
+	color: var(--foreground) !important;
+	border-color: var(--border) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable tbody tr,
+html[data-theme='dark'] .docblock-argstable tr,
+html[data-theme='dark'] .docblock-argstable td {
+	background-color: var(--surface) !important;
+	border-color: var(--border) !important;
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable tbody tr:hover,
+html[data-theme='dark'] .docblock-argstable tbody tr:hover td {
+	background-color: var(--surface-subtle) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable td span,
+html[data-theme='dark'] .docblock-argstable td div,
+html[data-theme='dark'] .docblock-argstable td p {
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable-head {
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable-body {
+	color: var(--foreground) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable input,
+html[data-theme='dark'] .docblock-argstable select,
+html[data-theme='dark'] .docblock-argstable textarea {
+	background-color: var(--surface-subtle) !important;
+	color: var(--foreground) !important;
+	border: 1px solid var(--border) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable button {
+	background-color: var(--surface-subtle) !important;
+	color: var(--foreground) !important;
+	border: 1px solid var(--border) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable button:hover {
+	background-color: var(--surface) !important;
+}
+
+html[data-theme='dark'] .docblock-argstable svg {
+	fill: var(--foreground-subtle) !important;
+}
+
+/* Category header / expander row in ArgsTable (e.g. PROPERTIES) */
+html[data-theme='dark'] .docblock-argstable tr[title],
+html[data-theme='dark'] .docblock-argstable button[title],
+html[data-theme='dark'] .docblock-argstable button[title] span {
+	background-color: var(--surface-subtle) !important;
+	color: var(--foreground) !important;
+}

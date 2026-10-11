@@ -6,9 +6,14 @@ export interface AccordionItemProps extends Omit<HTMLAttributes<HTMLDivElement>,
 	classes?: {
 		trigger?: string;
 		content?: string;
+		indicator?: string;
+		panel?: string;
 	};
+	ref?: HTMLDivElement | null;
+	triggerRef?: HTMLButtonElement | null;
 	value: string;
 	disabled?: boolean;
-	trigger: Snippet;
-	children: Snippet;
+	trigger: Snippet<[{ open: boolean }]>;
+	indicator?: Snippet<[{ open: boolean }]>;
+	children: Snippet<[{ open: boolean }]>;
 }

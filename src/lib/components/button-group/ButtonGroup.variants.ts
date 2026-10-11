@@ -14,4 +14,7 @@ export const buttonGroupVariants = cva('inline-flex', {
 	}
 });
 
+export type ButtonGroupOrientation = NonNullable<
+	VariantProps<typeof buttonGroupVariants>['orientation']
+>;
 export type ButtonGroupVariantProps = VariantProps<typeof buttonGroupVariants>;

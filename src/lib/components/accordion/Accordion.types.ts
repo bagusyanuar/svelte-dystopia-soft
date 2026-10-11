@@ -3,6 +3,7 @@ import type { HTMLAttributes } from 'svelte/elements';
 
 interface AccordionBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
 	class?: string;
+	ref?: HTMLDivElement | null;
 	children: Snippet;
 }
 

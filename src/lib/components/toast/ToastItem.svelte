@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy, untrack, type Snippet } from 'svelte';
 	import { cn } from '../../utils/cn.js';
 	import { createPresence } from '../../utils/presence.svelte.js';
 	import { toastVariants } from './Toaster.variants.js';
-	import type { ToastRecord } from './toast-store.svelte.js';
+	import type { ToastRecord, ToastVariant } from './toast-store.svelte.js';
 
 	let {
 		toast: item,
@@ -13,7 +13,13 @@
 	}: {
 		toast: ToastRecord;
 		onDismiss: (id: string) => void;
-		classes?: { item?: string; title?: string; description?: string; close?: string };
+		classes?: {
+			item?: string;
+			icon?: string;
+			title?: string;
+			description?: string;
+			close?: string;
+		};
 		labels?: { close?: string };
 	} = $props();
 
@@ -61,7 +67,79 @@
 	$effect(() => {
 		if (!presence.current) onDismiss(item.id);
 	});
+
+	const tones: Record<ToastVariant, string> = {
+		default: 'text-foreground-soft',
+		info: 'text-info',
+		success: 'text-success',
+		warning: 'text-warning',
+		danger: 'text-danger'
+	};
+	const tone = $derived(tones[item.variant]);
 </script>
+
+{#snippet defaultIcon(variant: ToastVariant)}
+	{#if variant === 'success'}
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+			class="size-4"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<path d="m9 12 2 2 4-4" />
+		</svg>
+	{:else if variant === 'danger'}
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+			class="size-4"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<line x1="12" y1="8" x2="12" y2="12" />
+			<line x1="12" y1="16" x2="12.01" y2="16" />
+		</svg>
+	{:else if variant === 'warning'}
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+			class="size-4"
+		>
+			<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+			<line x1="12" y1="9" x2="12" y2="13" />
+			<line x1="12" y1="17" x2="12.01" y2="17" />
+		</svg>
+	{:else if variant === 'info'}
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+			class="size-4"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<line x1="12" y1="16" x2="12" y2="12" />
+			<line x1="12" y1="8" x2="12.01" y2="8" />
+		</svg>
+	{/if}
+{/snippet}
 
 {#if presence.current}
 	<div
@@ -74,7 +152,20 @@
 		onpointerleave={schedule}
 		class={cn(toastVariants({ variant: item.variant }), classes?.item)}
 	>
-		<div class="min-w-0 flex-1 space-y-1">
+		{#if item.icon !== false && (item.icon !== undefined || item.variant !== 'default')}
+			<span
+				aria-hidden="true"
+				data-slot="toast-icon"
+				class={cn('mt-0.5 shrink-0', tone, classes?.icon)}
+			>
+				{#if item.icon}
+					{@render (item.icon as Snippet)()}
+				{:else}
+					{@render defaultIcon(item.variant)}
+				{/if}
+			</span>
+		{/if}
+		<div class="min-w-0 flex-1 space-y-0.5">
 			<p class={cn('leading-snug font-medium text-foreground', classes?.title)}>{item.title}</p>
 			{#if item.description}
 				<p class={cn('leading-snug text-foreground-subtle', classes?.description)}>
@@ -87,7 +178,7 @@
 			onclick={close}
 			aria-label={labels?.close ?? 'Close'}
 			class={cn(
-				'inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+				'inline-flex size-6 shrink-0 -mr-1 -mt-0.5 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 				classes?.close
 			)}
 		>

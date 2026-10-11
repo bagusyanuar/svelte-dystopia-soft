@@ -3,5 +3,7 @@ import type { HTMLAttributes } from 'svelte/elements';
 
 export interface BreadcrumbProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
 	class?: string;
-	children: Snippet;
+	/** Reference to the root `<nav>` element */
+	ref?: HTMLElement | null;
+	children?: Snippet;
 }

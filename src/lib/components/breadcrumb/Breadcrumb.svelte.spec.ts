@@ -81,12 +81,12 @@ describe('Breadcrumb family', () => {
 	});
 
 	it.each([
-		['Breadcrumb', Breadcrumb],
-		['BreadcrumbList', BreadcrumbList],
-		['BreadcrumbItem', BreadcrumbItem],
-		['BreadcrumbPage', BreadcrumbPage]
-	])('%s renders its children and forwards a class override', async (_name, Component) => {
-		render(Component, { children: text, class: 'my-custom-class' });
+		['Breadcrumb', () => render(Breadcrumb, { children: text, class: 'my-custom-class' })],
+		['BreadcrumbList', () => render(BreadcrumbList, { children: text, class: 'my-custom-class' })],
+		['BreadcrumbItem', () => render(BreadcrumbItem, { children: text, class: 'my-custom-class' })],
+		['BreadcrumbPage', () => render(BreadcrumbPage, { children: text, class: 'my-custom-class' })]
+	])('%s renders its children and forwards a class override', async (_name, renderComponent) => {
+		renderComponent();
 
 		await expect.element(page.getByText('Content')).toBeInTheDocument();
 		expect(page.getByText('Content').element().parentElement?.className).toContain(
@@ -95,12 +95,12 @@ describe('Breadcrumb family', () => {
 	});
 
 	it.each([
-		['Breadcrumb', Breadcrumb],
-		['BreadcrumbList', BreadcrumbList],
-		['BreadcrumbItem', BreadcrumbItem],
-		['BreadcrumbPage', BreadcrumbPage]
-	])('%s forwards unrecognized attributes', async (_name, Component) => {
-		render(Component, { children: text, id: 'probe-id' });
+		['Breadcrumb', () => render(Breadcrumb, { children: text, id: 'probe-id' })],
+		['BreadcrumbList', () => render(BreadcrumbList, { children: text, id: 'probe-id' })],
+		['BreadcrumbItem', () => render(BreadcrumbItem, { children: text, id: 'probe-id' })],
+		['BreadcrumbPage', () => render(BreadcrumbPage, { children: text, id: 'probe-id' })]
+	])('%s forwards unrecognized attributes', async (_name, renderComponent) => {
+		renderComponent();
 
 		expect(page.getByText('Content').element().parentElement?.id).toBe('probe-id');
 	});
@@ -111,5 +111,23 @@ describe('Breadcrumb family', () => {
 		const link = page.getByRole('link').element();
 		expect(link.className).toContain('my-custom-class');
 		expect(link.id).toBe('probe-id');
+	});
+
+	it('binds DOM element refs on all subcomponents', async () => {
+		render(BreadcrumbHarness);
+
+		await expect.element(page.getByTestId('has-nav-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-list-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-item-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-link-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-page-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-sep-ref')).toHaveTextContent('yes');
+	});
+
+	it('exposes data-current attribute on BreadcrumbPage', async () => {
+		render(BreadcrumbPage, { children: text, 'data-testid': 'page-probe' });
+
+		const pageEl = page.getByTestId('page-probe');
+		await expect.element(pageEl).toHaveAttribute('data-current', '');
 	});
 });

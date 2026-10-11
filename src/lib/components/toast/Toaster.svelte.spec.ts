@@ -1,3 +1,4 @@
+import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
 import { describe, expect, it, afterEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -58,7 +59,8 @@ describe('Toaster.svelte', () => {
 
 			await expect.element(page.getByRole('status')).toBeInTheDocument();
 
-			await vi.advanceTimersByTimeAsync(500);
+			// 500ms duration + 150ms exit animation buffer
+			await vi.advanceTimersByTimeAsync(700);
 
 			await expect.element(page.getByRole('status')).not.toBeInTheDocument();
 		} finally {
@@ -171,5 +173,80 @@ describe('Toaster.svelte', () => {
 		const item = document.querySelector('[data-slot="toast"]')!;
 		expect(item.getAttribute('data-state')).toBe('open');
 		expect(item.className).not.toContain('animate-');
+	});
+
+	it('renders default message without icon by default', async () => {
+		render(Toaster);
+		toast.message('Plain');
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		expect(document.querySelector('[data-slot="toast-icon"]')).toBeNull();
+	});
+
+	it('renders info toast with info icon and info tone', async () => {
+		render(Toaster);
+		toast.info('Info message');
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
+		expect(iconEl).not.toBeNull();
+		expect(iconEl.className).toContain('text-info');
+	});
+
+	it('renders success toast with success icon and success tone', async () => {
+		render(Toaster);
+		toast.success('Done');
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
+		expect(iconEl).not.toBeNull();
+		expect(iconEl.className).toContain('text-success');
+	});
+
+	it('renders warning toast with warning icon and warning tone', async () => {
+		render(Toaster);
+		toast.warning('Watch out');
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
+		expect(iconEl).not.toBeNull();
+		expect(iconEl.className).toContain('text-warning');
+	});
+
+	it('renders danger toast with danger icon and danger tone', async () => {
+		render(Toaster);
+		toast.danger('Failed');
+
+		await expect.element(page.getByRole('alert')).toBeInTheDocument();
+		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
+		expect(iconEl).not.toBeNull();
+		expect(iconEl.className).toContain('text-danger');
+	});
+
+	it('renders a custom icon snippet when provided', async () => {
+		render(Toaster);
+		const customIcon = createRawSnippet(() => ({
+			render: () => '<span data-testid="my-icon">★</span>'
+		}));
+		toast.message('Favorited', { icon: customIcon });
+
+		await expect.element(page.getByTestId('my-icon')).toBeInTheDocument();
+	});
+
+	it('hides the icon when icon is false', async () => {
+		render(Toaster);
+		toast.success('No icon here', { icon: false });
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		expect(document.querySelector('[data-slot="toast-icon"]')).toBeNull();
+	});
+
+	it('lets a consumer override the icon class via classes.icon', async () => {
+		render(Toaster, { classes: { icon: 'custom-icon-class' } });
+		toast.success('Styled icon');
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
+		expect(iconEl.className).toContain('custom-icon-class');
 	});
 });

@@ -68,4 +68,70 @@ describe('Button.svelte', () => {
 		const svg = page.getByRole('button').element().querySelector('svg');
 		expect(svg).toBeNull();
 	});
+
+	it('renders xs size with h-6 px-2 text-xs classes', async () => {
+		render(Button, { size: 'xs', children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		await expect.element(button).toBeInTheDocument();
+		const node = button.element();
+		expect(node.className).toContain('h-6');
+		expect(node.className).toContain('px-2');
+		expect(node.className).toContain('text-xs');
+	});
+
+	it('defaults to type="button"', async () => {
+		render(Button, { children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		await expect.element(button).toHaveAttribute('type', 'button');
+	});
+
+	it('allows setting custom type like submit', async () => {
+		render(Button, { type: 'submit', children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		await expect.element(button).toHaveAttribute('type', 'submit');
+	});
+
+	it('renders a consumer element via child snippet without injecting button type', async () => {
+		const customLink = createRawSnippet<[{ props: Record<string, unknown> }]>((getArgs) => ({
+			render: () => {
+				const { props } = getArgs();
+				return `<a data-testid="custom-link" href="#test" class="${String(props.class ?? '')}">Custom Link</a>`;
+			}
+		}));
+
+		render(Button, { child: customLink });
+
+		const link = page.getByTestId('custom-link');
+		await expect.element(link).toBeInTheDocument();
+		expect(link.element().getAttribute('type')).toBeNull();
+		expect(link.element().className).toContain('inline-flex');
+	});
+
+	it('exposes data-loading and data-disabled attributes when isLoading is set', async () => {
+		render(Button, { isLoading: true, children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		await expect.element(button).toHaveAttribute('data-loading');
+		await expect.element(button).toHaveAttribute('data-disabled');
+	});
+
+	it('exposes data-disabled attribute when disabled is set without data-loading', async () => {
+		render(Button, { disabled: true, children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		await expect.element(button).toHaveAttribute('data-disabled');
+		expect(button.element().hasAttribute('data-loading')).toBe(false);
+	});
+
+	it('omits data-loading and data-disabled when idle and enabled', async () => {
+		render(Button, { children: label });
+
+		const button = page.getByRole('button', { name: 'Click me' });
+		expect(button.element().hasAttribute('data-loading')).toBe(false);
+		expect(button.element().hasAttribute('data-disabled')).toBe(false);
+	});
 });
+

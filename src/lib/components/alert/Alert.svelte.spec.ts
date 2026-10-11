@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Alert from './Alert.svelte';
+import AlertHarness from './AlertHarness.spec.svelte';
 
 const title = createRawSnippet(() => ({
 	render: () => `<span>Payment failed</span>`
@@ -107,5 +108,27 @@ describe('Alert.svelte', () => {
 		render(Alert, { title, 'data-testid': 'billing-alert' });
 
 		await expect.element(page.getByTestId('billing-alert')).toBeInTheDocument();
+	});
+
+	it('reflects data-variant on the root element', async () => {
+		render(Alert, { title, variant: 'warning' });
+
+		const alert = page.getByRole('alert').element();
+		expect(alert.getAttribute('data-variant')).toBe('warning');
+	});
+
+	it('binds DOM ref, renders classes.content, and passes variant payload to snippets', async () => {
+		render(AlertHarness);
+
+		await expect.element(page.getByTestId('has-alert-ref')).toHaveTextContent('yes');
+
+		const alert = page.getByRole('alert').element();
+		expect(alert.getAttribute('data-variant')).toBe('danger');
+		expect(alert.querySelector('.custom-content-wrapper')).toBeTruthy();
+
+		await expect.element(page.getByTestId('icon-variant')).toHaveTextContent('danger');
+		await expect.element(page.getByTestId('title-variant')).toHaveTextContent('danger');
+		await expect.element(page.getByTestId('desc-variant')).toHaveTextContent('danger');
+		await expect.element(page.getByTestId('children-variant')).toHaveTextContent('danger');
 	});
 });

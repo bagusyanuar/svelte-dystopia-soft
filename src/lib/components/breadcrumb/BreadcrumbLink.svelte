@@ -2,7 +2,13 @@
 	import { cn } from '../../utils/cn.js';
 	import type { BreadcrumbLinkProps } from './BreadcrumbLink.types.js';
 
-	let { class: className, child, children, ...restProps }: BreadcrumbLinkProps = $props();
+	let {
+		class: className,
+		ref = $bindable(null),
+		child,
+		children,
+		...restProps
+	}: BreadcrumbLinkProps = $props();
 
 	const mergedProps = $derived({
 		...restProps,
@@ -16,7 +22,7 @@
 {#if child}
 	{@render child({ props: mergedProps })}
 {:else}
-	<a {...mergedProps}>
-		{@render children()}
+	<a bind:this={ref} {...mergedProps}>
+		{@render children?.()}
 	</a>
 {/if}

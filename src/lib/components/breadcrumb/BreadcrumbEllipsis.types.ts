@@ -10,6 +10,8 @@ export interface BreadcrumbEllipsisProps extends Omit<HTMLButtonAttributes, 'chi
 	open?: boolean;
 	placement?: Placement;
 	labels?: { more?: string };
+	/** Custom trigger icon or snippet, replaces the default 3-dots icon */
+	trigger?: Snippet<[{ open: boolean }]>;
 	/** Popover content — typically the collapsed `BreadcrumbLink`/`BreadcrumbItem`s. */
 	children: Snippet;
 }
