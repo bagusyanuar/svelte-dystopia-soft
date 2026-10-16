@@ -4,6 +4,7 @@ import { describe, expect, it, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Dialog from './Dialog.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import DialogSemiHeadlessHarness from './DialogSemiHeadlessHarness.spec.svelte';
 
 const trigger = createRawSnippet(() => ({
 	render: () => `<span>Open</span>`
@@ -321,5 +322,97 @@ describe('Dialog.svelte', () => {
 
 		expect(overlay.className).not.toContain('animate-');
 		expect(dialog.className).not.toContain('animate-');
+	});
+
+	it('binds root ref, triggerRef, and contentRef correctly', async () => {
+		render(DialogSemiHeadlessHarness);
+
+		const statusEl = page.getByTestId('ref-status').element();
+		expect(statusEl.getAttribute('data-has-root')).toBe('true');
+		expect(statusEl.getAttribute('data-has-trigger')).toBe('true');
+		expect(statusEl.getAttribute('data-has-content')).toBe('false');
+
+		await page.getByRole('button', { name: 'Open Modal' }).click();
+
+		expect(statusEl.getAttribute('data-has-content')).toBe('true');
+	});
+
+	it('supports root class prop merging with default classes', async () => {
+		render(DialogSemiHeadlessHarness, { class: 'custom-root-btn' });
+
+		const triggerBtn = page.getByRole('button', { name: 'Open Modal' }).element();
+		expect(triggerBtn.className).toContain('custom-root-btn');
+		expect(triggerBtn.className).toContain('inline-flex');
+	});
+
+	it('supports sub-parts styling via classes.body and classes.closeIcon', async () => {
+		render(DialogSemiHeadlessHarness, {
+			classes: { body: 'custom-body-slot', closeIcon: 'custom-icon-slot' }
+		});
+
+		await page.getByRole('button', { name: 'Open Modal' }).click();
+
+		const bodyEl = document.querySelector('[data-slot="dialog-body"]')!;
+		expect(bodyEl.className).toContain('custom-body-slot');
+
+		const closeIcon = document.querySelector('[data-slot="dialog-close"] svg')!;
+		expect(closeIcon.getAttribute('class')).toContain('custom-icon-slot');
+	});
+
+	it('exposes data-slot annotations across all sub-parts', async () => {
+		render(DialogSemiHeadlessHarness);
+
+		const triggerBtn = page.getByRole('button', { name: 'Open Modal' }).element();
+		expect(triggerBtn.getAttribute('data-slot')).toBe('dialog-trigger');
+
+		await page.getByRole('button', { name: 'Open Modal' }).click();
+
+		expect(document.querySelector('[data-slot="dialog-overlay"]')).toBeTruthy();
+		expect(document.querySelector('[data-slot="dialog-content"]')).toBeTruthy();
+		expect(document.querySelector('[data-slot="dialog-title"]')).toBeTruthy();
+		expect(document.querySelector('[data-slot="dialog-description"]')).toBeTruthy();
+		expect(document.querySelector('[data-slot="dialog-body"]')).toBeTruthy();
+		expect(document.querySelector('[data-slot="dialog-close"]')).toBeTruthy();
+	});
+
+	it('sets data-disabled attribute on trigger when disabled', async () => {
+		render(DialogSemiHeadlessHarness, { disabled: true });
+
+		const triggerBtn = page.getByRole('button', { name: 'Open Modal' }).element();
+		expect(triggerBtn.hasAttribute('disabled')).toBe(true);
+		expect(triggerBtn.getAttribute('data-disabled')).toBe('');
+	});
+
+	it('passes open and close state payload to snippets', async () => {
+		render(DialogSemiHeadlessHarness);
+
+		const triggerSpan = page.getByTestId('trigger-span').element();
+		expect(triggerSpan.getAttribute('data-is-open')).toBe('false');
+
+		await page.getByRole('button', { name: 'Open Modal' }).click();
+
+		expect(triggerSpan.getAttribute('data-is-open')).toBe('true');
+		expect(page.getByTestId('title-span').element().getAttribute('data-is-open')).toBe('true');
+		expect(page.getByTestId('desc-span').element().getAttribute('data-is-open')).toBe('true');
+		expect(page.getByTestId('body-content').element().getAttribute('data-is-open')).toBe('true');
+
+		// Close via inner close button provided in children snippet payload
+		await page.getByTestId('inner-close-btn').click();
+
+		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+		expect(triggerSpan.getAttribute('data-is-open')).toBe('false');
+	});
+
+	it('renders custom close snippet and closes on interaction', async () => {
+		render(DialogSemiHeadlessHarness, { useCustomClose: true });
+
+		await page.getByRole('button', { name: 'Open Modal' }).click();
+
+		await expect.element(page.getByTestId('custom-close-btn')).toBeInTheDocument();
+		expect(document.querySelector('[data-slot="dialog-close"]')).toBeNull();
+
+		await page.getByTestId('custom-close-btn').click();
+
+		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
 	});
 });

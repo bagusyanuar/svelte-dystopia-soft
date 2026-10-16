@@ -7,13 +7,40 @@
 
 	type LabelStoryArgs = Pick<LabelProps, 'required' | 'disabled'>;
 
+	const componentDescription = [
+		'Komponen label form (Label) dengan estetika **SaaS Compact Minimalist** (terinspirasi dari Linear).',
+		'',
+		'### Fitur Utama & Prinsip Semi-Headless',
+		'- **Aksesibilitas Form Bersih**: Terhubung langsung ke kontrol input melalui atribut `for`. Indikator bintang wajib disembunyikan dari pembaca layar (`aria-hidden="true"`) untuk menghindari pengumuman ganda (misal: "Email bintang wajib diisi").',
+		'- **State via Data-Attributes**: Mengekspos hook `data-slot="label"`, `data-slot="label-required"`, `data-required`, dan `data-disabled` untuk penataan gaya berbasis status.',
+		'- **Akses DOM Ref**: Mendukung binding `ref = $bindable(null)` ke elemen root `<label>`.',
+		'- **Snippet Modular & State Payload**: Snippet `children` menerima payload `{ required, disabled }`, serta menyediakan snippet opsional `requiredIndicator` untuk mengganti tanda bintang default dengan teks atau badge kustom.'
+	].join('\n');
+
 	const { Story } = defineMeta({
 		title: 'Components/Label',
 		component: Label,
 		tags: ['autodocs'],
+		parameters: {
+			docs: {
+				description: {
+					component: componentDescription
+				}
+			}
+		},
 		argTypes: {
-			required: { control: 'boolean' },
-			disabled: { control: 'boolean' }
+			required: {
+				control: 'boolean',
+				description: 'Menandai field sebagai wajib dan menampilkan indikator required.'
+			},
+			disabled: {
+				control: 'boolean',
+				description: 'Menerapkan gaya visual nonaktif dan pointer tidak aktif.'
+			},
+			class: {
+				control: 'text',
+				description: 'Class override untuk elemen root <label>.'
+			}
 		}
 	});
 </script>
@@ -43,6 +70,41 @@
 >
 	{#snippet template(args: LabelStoryArgs)}
 		<Label {...args}>Email</Label>
+	{/snippet}
+</Story>
+
+<Story name="With custom required indicator">
+	<div class="flex w-72 flex-col gap-3">
+		<Label for="custom-username" required>
+			Nama Pengguna
+			{#snippet requiredIndicator()}
+				<span class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+					Wajib
+				</span>
+			{/snippet}
+		</Label>
+		<TextField id="custom-username" placeholder="cth. pengguna_baru" />
+	</div>
+</Story>
+
+<Story name="With state payload" args={{ required: true, disabled: false }}>
+	{#snippet template(args: LabelStoryArgs)}
+		<div class="flex w-72 flex-col gap-1.5">
+			<Label {...args} for="payload-field">
+				{#snippet children({ required, disabled })}
+					<span>Kata Sandi Baru</span>
+					<span class="text-xs text-foreground-subtle">
+						{disabled ? '(Terkunci)' : required ? '(Diperlukan)' : '(Opsional)'}
+					</span>
+				{/snippet}
+			</Label>
+			<TextField
+				id="payload-field"
+				type="password"
+				placeholder="••••••••"
+				disabled={args.disabled}
+			/>
+		</div>
 	{/snippet}
 </Story>
 

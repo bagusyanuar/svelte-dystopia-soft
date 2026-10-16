@@ -26,17 +26,31 @@ export interface CalendarDaySnippetProps {
 	inRange: boolean;
 }
 
+export interface CalendarHeadingSnippetProps {
+	heading: string;
+	focusedDate: CalendarDate;
+	granularity: 'day' | 'month' | 'year';
+}
+
+export interface CalendarClasses {
+	header?: string;
+	previousButton?: string;
+	nextButton?: string;
+	heading?: string;
+	weekdays?: string;
+	weekday?: string;
+	row?: string;
+	grid?: string;
+	day?: string;
+}
+
 interface CalendarBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
 	class?: string;
-	classes?: {
-		header?: string;
-		previousButton?: string;
-		nextButton?: string;
-		heading?: string;
-		weekdays?: string;
-		grid?: string;
-		day?: string;
-	};
+	/** Bindable reference to the root wrapper element. */
+	ref?: HTMLDivElement | null;
+	/** Bindable reference to the grid element. */
+	gridRef?: HTMLDivElement | null;
+	classes?: CalendarClasses;
 	/** BCP 47 locale used for week-start day and month/weekday formatting. Defaults to the browser locale. */
 	locale?: string;
 	/**
@@ -51,6 +65,12 @@ interface CalendarBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
 	maxValue?: CalendarDate;
 	isDateDisabled?: (date: CalendarDate) => boolean;
 	labels?: CalendarLabels;
+	/** Custom snippet to replace the previous button icon. */
+	previousIcon?: Snippet;
+	/** Custom snippet to replace the next button icon. */
+	nextIcon?: Snippet;
+	/** Custom snippet to customize the heading display. */
+	headingSnippet?: Snippet<[CalendarHeadingSnippetProps]>;
 	/** Overrides the default rendering of a day cell. The rendered element is responsible for its own selection handling — see `Pagination`'s `item` snippet for the same escape-hatch shape. */
 	day?: Snippet<[CalendarDaySnippetProps]>;
 }

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Collapsible from './Collapsible.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import CollapsibleHarness from './CollapsibleHarness.spec.svelte';
 
 const trigger = createRawSnippet(() => ({
 	render: () => `<span>Toggle</span>`
@@ -92,4 +93,60 @@ describe('Collapsible.svelte', () => {
 		expect(root?.className).toContain('rounded-md');
 		expect(root?.className).not.toContain('rounded-lg');
 	});
+
+	// --- Semi-headless capability & hover rounded fix tests ---
+
+	it('fixes header hover rounded bug: clips via root overflow-hidden and removes rounded-lg from trigger', async () => {
+		render(Collapsible, { trigger, children: content, open: true });
+
+		const button = page.getByRole('button', { name: 'Toggle' }).element();
+		const root = button.parentElement;
+
+		expect(root?.className).toContain('overflow-hidden');
+		expect(root?.className).toContain('rounded-lg');
+		expect(button.className).not.toContain('rounded-lg');
+	});
+
+	it('exposes data-slot, data-state, and data-disabled on root container', async () => {
+		render(Collapsible, { trigger, children: content, open: true });
+
+		const button = page.getByRole('button', { name: 'Toggle' }).element();
+		const root = button.parentElement;
+
+		expect(root?.getAttribute('data-slot')).toBe('collapsible');
+		expect(root?.getAttribute('data-state')).toBe('open');
+		expect(root?.hasAttribute('data-disabled')).toBe(false);
+	});
+
+	it('binds both root ref and triggerRef via bindable props', async () => {
+		render(CollapsibleHarness);
+
+		await expect.element(page.getByTestId('has-collapsible-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-trigger-ref')).toHaveTextContent('yes');
+	});
+
+	it('forwards open state payload to trigger and children snippets', async () => {
+		render(CollapsibleHarness);
+
+		await expect.element(page.getByTestId('trigger-text')).toHaveTextContent('Collapsed');
+		await expect.element(page.getByTestId('content-text')).toHaveTextContent('Closed Content');
+
+		await page.getByRole('button', { name: /Collapsed/ }).click();
+
+		await expect.element(page.getByTestId('trigger-text')).toHaveTextContent('Expanded');
+		await expect.element(page.getByTestId('content-text')).toHaveTextContent('Open Content');
+	});
+
+	it('supports custom indicator snippet and sub-part classes', async () => {
+		render(CollapsibleHarness, { customIndicator: true });
+
+		await expect.element(page.getByTestId('custom-indicator')).toHaveTextContent('[+]');
+
+		const button = page.getByRole('button', { name: /Collapsed/ }).element();
+		const controlsId = button.getAttribute('aria-controls');
+		const panel = document.getElementById(controlsId!);
+
+		expect(panel?.className).toContain('custom-panel-class');
+	});
 });
+

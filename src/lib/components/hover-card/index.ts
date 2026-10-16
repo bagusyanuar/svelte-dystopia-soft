@@ -1,2 +1,2 @@
 export { default as HoverCard } from './HoverCard.svelte';
-export type { HoverCardProps } from './HoverCard.types.js';
+export type { HoverCardProps, HoverCardClasses } from './HoverCard.types.js';

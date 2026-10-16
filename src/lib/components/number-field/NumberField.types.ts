@@ -1,6 +1,19 @@
+import type { Snippet } from 'svelte';
 import type { TextFieldProps } from '../text-field/TextField.types.js';
 
-export interface NumberFieldProps extends Omit<TextFieldProps, 'value' | 'type'> {
+export interface NumberFieldClasses {
+	/** Class override untuk elemen `<input>`. */
+	input?: string;
+	/** Class override untuk kontainer snippet `prefix`. */
+	prefix?: string;
+	/** Class override untuk kontainer snippet `suffix`. */
+	suffix?: string;
+}
+
+export interface NumberFieldProps extends Omit<
+	TextFieldProps,
+	'value' | 'type' | 'classes' | 'prefix' | 'suffix' | 'onValueChange'
+> {
 	/** Bindable. `undefined` while the field is empty or holds an unparsable value. */
 	value?: number;
 	onValueChange?: (value: number | undefined) => void;
@@ -14,4 +27,14 @@ export interface NumberFieldProps extends Omit<TextFieldProps, 'value' | 'type'>
 	 * browser in this mode.
 	 */
 	thousandSeparator?: boolean;
+	/** Fine-grained class overrides untuk sub-parts. */
+	classes?: NumberFieldClasses;
+	/** Primary bindable ref ke elemen `<input>`. */
+	ref?: HTMLInputElement | null;
+	/** Explicit alias untuk input ref. */
+	inputRef?: HTMLInputElement | null;
+	/** Snippet prefix di sebelah kiri input. Menerima payload `{ value, displayValue }`. */
+	prefix?: Snippet<[{ value: number | undefined; displayValue: string }]>;
+	/** Snippet suffix di sebelah kanan input. Menerima payload `{ value, displayValue }`. */
+	suffix?: Snippet<[{ value: number | undefined; displayValue: string }]>;
 }

@@ -1,2 +1,2 @@
 export { default as Popover } from './Popover.svelte';
-export type { PopoverProps } from './Popover.types.js';
+export type { PopoverClasses, PopoverProps } from './Popover.types.js';

@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import EmptyState from './EmptyState.svelte';
+import EmptyStateHarness from './EmptyStateHarness.spec.svelte';
 
 const title = createRawSnippet(() => ({
 	render: () => `<span>No results found</span>`
@@ -78,5 +79,32 @@ describe('EmptyState.svelte', () => {
 		render(EmptyState, { title, 'data-testid': 'search-empty-state' });
 
 		await expect.element(page.getByTestId('search-empty-state')).toBeInTheDocument();
+	});
+
+	it('exposes ref bound to the root element', async () => {
+		render(EmptyStateHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+	});
+
+	it('exposes data-slot hooks across all sub-parts', async () => {
+		render(EmptyStateHarness);
+
+		const root = page.getByRole('status').element();
+		expect(root.getAttribute('data-slot')).toBe('empty-state');
+		expect(root.querySelector('[data-slot="empty-state-icon"]')).toBeTruthy();
+		expect(root.querySelector('[data-slot="empty-state-title"]')).toBeTruthy();
+		expect(root.querySelector('[data-slot="empty-state-description"]')).toBeTruthy();
+		expect(root.querySelector('[data-slot="empty-state-actions"]')).toBeTruthy();
+	});
+
+	it('lets a consumer style the actions container via classes.actions', async () => {
+		render(EmptyStateHarness, {
+			classes: { actions: 'custom-actions-class' }
+		});
+
+		const actionsEl = document.querySelector('[data-slot="empty-state-actions"]');
+		expect(actionsEl?.className).toContain('custom-actions-class');
 	});
 });

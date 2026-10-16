@@ -1,9 +1,10 @@
 import { createRawSnippet } from 'svelte';
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Popover from './Popover.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import PopoverSemiHeadlessHarness from './PopoverSemiHeadlessHarness.spec.svelte';
 
 const trigger = createRawSnippet(() => ({
 	render: () => `<span>Open</span>`
@@ -95,9 +96,6 @@ describe('Popover.svelte', () => {
 
 		await page.getByRole('button', { name: 'Open' }).click();
 
-		// Left in flow, the portalled panel lands at the end of <body> and a
-		// focus() call scrolls the page away from the trigger before floating-ui
-		// ever reports coordinates.
 		const dialog = page.getByRole('dialog').element();
 		expect(getComputedStyle(dialog).position).toBe('fixed');
 	});
@@ -117,7 +115,6 @@ describe('Popover.svelte', () => {
 
 		await userEvent.keyboard('{Escape}');
 
-		// Mid-animation: closed, but deliberately still in the DOM.
 		const midFlight = document.querySelector('[role="dialog"]');
 		expect(midFlight?.getAttribute('data-state')).toBe('closed');
 
@@ -165,5 +162,75 @@ describe('Popover.svelte', () => {
 
 		expect(button.className).toContain('rounded-full');
 		expect(button.className).not.toContain('rounded-md');
+	});
+
+	it('exposes ref, triggerRef, and contentRef bound to respective elements', async () => {
+		render(PopoverSemiHeadlessHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+		await expect.element(status).toHaveAttribute('data-has-trigger', 'true');
+
+		// Open popover so content mounts
+		await page.getByTestId('trigger-text').click();
+		await expect.element(status).toHaveAttribute('data-has-content', 'true');
+	});
+
+	it('exposes data-slot and data-placement attributes on trigger and content', async () => {
+		render(Popover, {
+			trigger,
+			children: content,
+			placement: 'top-end'
+		});
+
+		const button = document.querySelector('[data-slot="popover-trigger"]');
+		expect(button).toBeTruthy();
+
+		await page.getByRole('button', { name: 'Open' }).click();
+
+		const contentEl = document.querySelector('[data-slot="popover-content"]');
+		expect(contentEl).toBeTruthy();
+		expect(contentEl?.hasAttribute('data-placement')).toBe(true);
+	});
+
+	it('allows primary class to style trigger button alongside classes.trigger', async () => {
+		render(Popover, {
+			trigger,
+			children: content,
+			class: 'custom-primary-class',
+			classes: { trigger: 'custom-part-class' }
+		});
+
+		const button = page.getByRole('button', { name: 'Open' }).element();
+		expect(button.className).toContain('custom-primary-class');
+		expect(button.className).toContain('custom-part-class');
+	});
+
+	it('provides open and close payload to trigger and children snippets, closing via internal button', async () => {
+		render(PopoverSemiHeadlessHarness);
+
+		const triggerText = page.getByTestId('trigger-text');
+		await expect.element(triggerText).toHaveTextContent('IS_CLOSED');
+
+		await triggerText.click();
+		await expect.element(triggerText).toHaveTextContent('IS_OPEN');
+		await expect.element(page.getByRole('dialog')).toBeInTheDocument();
+
+		// Click the internal close button rendered by children({ close })
+		await page.getByTestId('internal-close-btn').click();
+
+		await expect.element(triggerText).toHaveTextContent('IS_CLOSED');
+		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+	});
+
+	it('calls onOpenChange callback when opening and closing', async () => {
+		const onOpenChange = vi.fn();
+		render(PopoverSemiHeadlessHarness, { onOpenChange });
+
+		await page.getByTestId('trigger-text').click();
+		expect(onOpenChange).toHaveBeenCalledWith(true);
+
+		await page.getByTestId('internal-close-btn').click();
+		expect(onOpenChange).toHaveBeenCalledWith(false);
 	});
 });

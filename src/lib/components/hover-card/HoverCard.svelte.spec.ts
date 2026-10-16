@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import HoverCard from './HoverCard.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import HoverCardSemiHeadlessHarness from './HoverCardSemiHeadlessHarness.spec.svelte';
 
 const content = createRawSnippet(() => ({
 	render: () => `<div data-testid="hovercard-content"><a href="/profile">View profile</a></div>`
@@ -189,5 +190,63 @@ describe('HoverCard.svelte', () => {
 		const cardEl = cardContent().element().parentElement!;
 		expect(cardEl.parentElement).toBe(document.body);
 		expect(container.contains(cardEl)).toBe(false);
+	});
+
+	it('exposes ref, triggerRef, and contentRef bindings', async () => {
+		render(HoverCardSemiHeadlessHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+		await expect.element(status).toHaveAttribute('data-has-trigger', 'true');
+
+		const harnessTrigger = page.getByTestId('test-trigger');
+		await harnessTrigger.hover();
+
+		await expect.element(page.getByTestId('harness-content')).toBeInTheDocument();
+		await expect.element(status).toHaveAttribute('data-has-content', 'true');
+	});
+
+	it('exposes data-slot hooks on trigger and content', async () => {
+		render(HoverCardSemiHeadlessHarness);
+
+		const triggerEl = document.querySelector('[data-slot="hover-card-trigger"]');
+		expect(triggerEl).toBeTruthy();
+
+		const harnessTrigger = page.getByTestId('test-trigger');
+		await harnessTrigger.hover();
+
+		const contentEl = document.querySelector('[data-slot="hover-card-content"]');
+		expect(contentEl).toBeTruthy();
+	});
+
+	it('lets a consumer override trigger classes using root class or classes.trigger', async () => {
+		render(HoverCard, {
+			content,
+			children: triggerChildren,
+			class: 'custom-root-class',
+			classes: { trigger: 'custom-subpart-class' }
+		});
+
+		const triggerSpan = document.querySelector('[data-slot="hover-card-trigger"]');
+		expect(triggerSpan?.className).toContain('custom-root-class');
+		expect(triggerSpan?.className).toContain('custom-subpart-class');
+	});
+
+	it('forwards open state and close action to snippet payloads', async () => {
+		render(HoverCardSemiHeadlessHarness);
+
+		const harnessTrigger = page.getByTestId('test-trigger');
+		await expect.element(harnessTrigger).toHaveAttribute('data-trigger-open', 'false');
+
+		await harnessTrigger.hover();
+
+		await expect.element(harnessTrigger).toHaveAttribute('data-trigger-open', 'true');
+		const cardEl = page.getByTestId('harness-content');
+		await expect.element(cardEl).toHaveAttribute('data-content-open', 'true');
+
+		// Click the close button provided inside the card snippet
+		await page.getByTestId('card-close-btn').click();
+
+		await expect.element(cardEl).not.toBeInTheDocument();
 	});
 });

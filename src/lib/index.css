@@ -74,6 +74,9 @@
 	--info: oklch(52% 0.18 250);
 	--info-border: oklch(82% 0.1 250);
 	--info-foreground: oklch(100% 0 0);
+
+	/* Modal / dialog backdrop scrim. Dims the page behind floating modals. */
+	--overlay: oklch(0% 0 0 / 0.5);
 }
 
 [data-theme='dark'] {
@@ -116,6 +119,9 @@
 	--info: oklch(70% 0.16 250);
 	--info-border: oklch(60% 0.18 250);
 	--info-foreground: oklch(12.9% 0.042 264.695);
+
+	/* Dark mode scrim: deeper black veil (75%) so the background darkens cleanly. */
+	--overlay: oklch(0% 0 0 / 0.75);
 }
 
 @theme inline {
@@ -153,6 +159,8 @@
 	--color-info: var(--info);
 	--color-info-border: var(--info-border);
 	--color-info-foreground: var(--info-foreground);
+
+	--color-overlay: var(--overlay);
 }
 
 /*
@@ -342,11 +350,13 @@
   stays stable if the styling changes.
 */
 @layer components {
-	[data-slot='dialog-overlay'][data-state='open'] {
+	[data-slot='dialog-overlay'][data-state='open'],
+	[data-slot='drawer-overlay'][data-state='open'] {
 		animation: var(--animate-dialog-overlay-in);
 	}
 
-	[data-slot='dialog-overlay'][data-state='closed'] {
+	[data-slot='dialog-overlay'][data-state='closed'],
+	[data-slot='drawer-overlay'][data-state='closed'] {
 		animation: var(--animate-dialog-overlay-out);
 	}
 
@@ -407,6 +417,7 @@
 	*/
 	@media (prefers-reduced-motion: reduce) {
 		[data-slot='dialog-overlay'][data-state],
+		[data-slot='drawer-overlay'][data-state],
 		[data-slot='dialog-content'][data-state],
 		[data-slot='toast'][data-state],
 		[data-slot='drawer-content'][data-state] {

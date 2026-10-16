@@ -1,5 +1,13 @@
 export { default as Dropdown } from './Dropdown.svelte';
-export type { DropdownProps } from './Dropdown.types.js';
+export type {
+	DropdownProps,
+	DropdownClasses,
+	DropdownTriggerSnippetProps,
+	DropdownContentSnippetProps
+} from './Dropdown.types.js';
 
 export { default as DropdownItem } from './DropdownItem.svelte';
-export type { DropdownItemProps } from './DropdownItem.types.js';
+export type {
+	DropdownItemProps,
+	DropdownItemChildProps
+} from './DropdownItem.types.js';

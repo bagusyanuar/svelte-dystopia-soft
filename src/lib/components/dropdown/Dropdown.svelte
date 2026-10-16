@@ -8,7 +8,11 @@
 	import type { DropdownProps } from './Dropdown.types.js';
 
 	let {
+		class: className,
 		classes,
+		ref = $bindable(null),
+		triggerRef = $bindable(null),
+		contentRef = $bindable(null),
 		open = $bindable(false),
 		placement = 'bottom-start',
 		offset = 8,
@@ -20,11 +24,9 @@
 
 	const contentId = $props.id();
 
-	let triggerEl = $state<HTMLButtonElement | null>(null);
-	let contentEl = $state<HTMLDivElement | null>(null);
 	const presence = createPresence(
 		() => open,
-		() => contentEl
+		() => contentRef
 	);
 	let pendingFocus: 'first' | 'last' | null = null;
 
@@ -32,11 +34,15 @@
 		open = false;
 	}
 
+	$effect(() => {
+		triggerRef = ref;
+	});
+
 	// Focus is always moved here programmatically (never by tabbing into the
 	// list), so items stay out of the tab order permanently — no roving
 	// tabindex bookkeeping needed.
 	const roving = createRovingFocus({
-		getContainer: () => contentEl,
+		getContainer: () => contentRef,
 		selector: '[role="menuitem"]:not(:disabled)'
 	});
 
@@ -72,7 +78,7 @@
 		const target = (event.target as HTMLElement).closest('[role="menuitem"]:not(:disabled)');
 		if (!target) return;
 		close();
-		triggerEl?.focus();
+		(ref ?? triggerRef)?.focus();
 	}
 
 	function handleTriggerKeydown(event: KeyboardEvent) {
@@ -86,12 +92,12 @@
 	$effect(() => {
 		if (!open) return;
 
-		// `contentEl` is itself tracked $state, so reading it makes this effect
+		// `contentRef` is itself tracked $state, so reading it makes this effect
 		// re-run once the portalled menu actually mounts. The first run (right
 		// after `open` flips) fires before that DOM exists — bail out rather
 		// than consuming `pendingFocus` on a run that can't act on it, or the
 		// real run that follows would see it already cleared.
-		if (!contentEl) return;
+		if (!contentRef) return;
 
 		if (pendingFocus === 'last') {
 			roving.focusLast();
@@ -100,12 +106,12 @@
 		}
 		pendingFocus = null;
 
-		return createDismissableLayer(() => [triggerEl, contentEl], {
+		return createDismissableLayer(() => [ref ?? triggerRef, contentRef], {
 			onPointerDownOutside: close,
 			onEscapeKeydown: (event) => {
 				event.preventDefault();
 				close();
-				triggerEl?.focus();
+				(ref ?? triggerRef)?.focus();
 			}
 		});
 	});
@@ -116,9 +122,12 @@
 		'aria-haspopup': 'menu' as const,
 		'aria-expanded': open,
 		'aria-controls': contentId,
+		'data-slot': 'dropdown-trigger',
 		'data-state': open ? 'open' : 'closed',
+		'data-disabled': restProps.disabled ? '' : undefined,
 		class: cn(
 			'inline-flex h-10 cursor-pointer items-center justify-center gap-tight rounded-md border border-border px-control-x text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			className,
 			classes?.trigger
 		),
 		onclick: () => (open = !open),
@@ -126,27 +135,28 @@
 	});
 </script>
 
-<button bind:this={triggerEl} {...triggerProps}>
-	{@render trigger()}
+<button bind:this={ref} {...triggerProps}>
+	{@render trigger({ open })}
 </button>
 
 {#if presence.current}
 	<div
-		bind:this={contentEl}
+		bind:this={contentRef}
 		id={contentId}
 		role="menu"
 		tabindex="-1"
+		data-slot="dropdown-content"
 		data-state={open ? 'open' : 'closed'}
 		inert={!open}
 		onkeydown={handleContentKeydown}
 		onclick={handleContentClick}
 		use:portal={{ target: portalTarget }}
-		use:floating={{ reference: triggerEl, placement, offset }}
+		use:floating={{ reference: ref, placement, offset }}
 		class={cn(
 			'z-50 min-w-40 rounded-lg border border-border bg-surface p-1 text-sm text-foreground-muted shadow-sm focus-visible:outline-none',
 			classes?.content
 		)}
 	>
-		{@render children()}
+		{@render children({ open, close })}
 	</div>
 {/if}

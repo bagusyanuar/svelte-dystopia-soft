@@ -55,8 +55,11 @@ export type ComboboxStateDeps<T extends ComboboxValue> = {
 	readonly manualFilter: boolean;
 	readonly searchDebounce: number;
 	readonly filter: ComboboxFilter<T> | undefined;
+	readonly creatable: boolean;
+	readonly creating: boolean;
 	setValue: (next: T | T[] | undefined) => void;
 	setSearch: (query: string) => void;
+	onCreate?: (query: string) => void | Promise<void>;
 };
 
 export class ComboboxState<T extends ComboboxValue> {
@@ -64,6 +67,11 @@ export class ComboboxState<T extends ComboboxValue> {
 	/** Raw text in the search box. Updates on every keystroke. */
 	inputValue = $state('');
 	activeIndex = $state(0);
+	isCreatingInternal = $state(false);
+
+	get isCreating(): boolean {
+		return Boolean(this.#deps.creating || this.isCreatingInternal);
+	}
 
 	/**
 	 * Labels of options that were selected at some point. In remote-search mode
@@ -102,6 +110,26 @@ export class ComboboxState<T extends ComboboxValue> {
 		const filter = this.#deps.filter ?? defaultFilter;
 		return options.filter((option) => filter(option, this.inputValue));
 	});
+
+	readonly canCreate = $derived.by(() => {
+		if (!this.#deps.creatable) return false;
+		const query = this.inputValue.trim();
+		if (!query) return false;
+		const needle = query.toLowerCase();
+		return !this.#deps.options.some(
+			(opt) =>
+				opt.label.trim().toLowerCase() === needle ||
+				String(opt.value).trim().toLowerCase() === needle
+		);
+	});
+
+	get totalCount(): number {
+		return this.filtered.length + (this.canCreate ? 1 : 0);
+	}
+
+	get isCreateActive(): boolean {
+		return this.canCreate && this.activeIndex === this.filtered.length;
+	}
 
 	readonly groups: ComboboxRenderGroup<T>[] = $derived.by(() => {
 		const groups: ComboboxRenderGroup<T>[] = [];
@@ -182,28 +210,36 @@ export class ComboboxState<T extends ComboboxValue> {
 	}
 
 	#isEnabled(index: number): boolean {
+		if (this.canCreate && index === this.filtered.length) return !this.isCreating;
 		const option = this.filtered[index];
 		return option !== undefined && !option.disabled;
 	}
 
 	resetActive(): void {
 		const next = this.filtered.findIndex((option) => !option.disabled);
-		this.activeIndex = next === -1 ? 0 : next;
+		if (next !== -1) {
+			this.activeIndex = next;
+		} else if (this.canCreate) {
+			this.activeIndex = this.filtered.length;
+		} else {
+			this.activeIndex = 0;
+		}
 	}
 
 	clampActive(): void {
-		if (this.filtered.length === 0) {
+		const total = this.totalCount;
+		if (total === 0) {
 			this.activeIndex = 0;
 			return;
 		}
-		if (this.activeIndex > this.filtered.length - 1 || !this.#isEnabled(this.activeIndex)) {
+		if (this.activeIndex > total - 1 || !this.#isEnabled(this.activeIndex)) {
 			this.resetActive();
 		}
 	}
 
 	/** Moves the highlight by `delta`, skipping disabled options and wrapping around. */
 	move(delta: number): void {
-		const total = this.filtered.length;
+		const total = this.totalCount;
 		if (total === 0) return;
 
 		let index = this.activeIndex;
@@ -217,7 +253,7 @@ export class ComboboxState<T extends ComboboxValue> {
 	}
 
 	moveTo(edge: 'first' | 'last'): void {
-		const total = this.filtered.length;
+		const total = this.totalCount;
 		if (total === 0) return;
 		this.activeIndex = edge === 'first' ? -1 : total;
 		this.move(edge === 'first' ? 1 : -1);
@@ -246,8 +282,36 @@ export class ComboboxState<T extends ComboboxValue> {
 	}
 
 	selectActive(): void {
+		if (this.canCreate && this.activeIndex === this.filtered.length) {
+			this.selectCreate();
+			return;
+		}
 		const option = this.filtered[this.activeIndex];
 		if (option) this.select(option);
+	}
+
+	async selectCreate(): Promise<void> {
+		if (!this.canCreate || this.isCreating) return;
+		const query = this.inputValue.trim();
+		this.selectedOptions.set(query as unknown as T, {
+			value: query as unknown as T,
+			label: query
+		});
+
+		try {
+			const res = this.#deps.onCreate?.(query);
+			if (res && typeof (res as Promise<unknown>).then === 'function') {
+				this.isCreatingInternal = true;
+				await res;
+			}
+			if (this.multiple) {
+				this.setInputValue('');
+			} else {
+				this.closeMenu();
+			}
+		} finally {
+			this.isCreatingInternal = false;
+		}
 	}
 
 	deselect(value: T): void {

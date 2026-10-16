@@ -1,2 +1,8 @@
 export { default as Dialog } from './Dialog.svelte';
-export type { DialogProps } from './Dialog.types.js';
+export type {
+	DialogProps,
+	DialogClasses,
+	DialogTriggerSnippetProps,
+	DialogContentSnippetProps,
+	DialogCloseSnippetProps
+} from './Dialog.types.js';

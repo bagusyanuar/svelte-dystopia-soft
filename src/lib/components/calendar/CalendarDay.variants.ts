@@ -9,7 +9,7 @@ export const calendarDayVariants = cva(
 				false: 'text-foreground-soft hover:bg-surface-subtle'
 			},
 			outsideMonth: {
-				true: 'text-foreground-faint',
+				true: 'text-foreground-muted',
 				false: ''
 			},
 			inRange: {

@@ -1,4 +1,5 @@
 import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
 import type { ComboboxVariantProps } from './Combobox.variants.js';
 
 export type ComboboxValue = string | number;
@@ -38,11 +39,28 @@ export interface ComboboxLabels {
 	retry?: string;
 	clearSelection?: string;
 	removeChip?: (label: string) => string;
+	create?: (query: string) => string;
+	creating?: (query: string) => string;
+}
+
+export interface ComboboxIndicatorPayload {
+	open: boolean;
+}
+
+export interface ComboboxEmptyPayload {
+	query: string;
+}
+
+export interface ComboboxCreateItemPayload {
+	query: string;
+	active: boolean;
+	creating: boolean;
 }
 
 export interface ComboboxProps<
 	T extends ComboboxValue = ComboboxValue
-> extends ComboboxVariantProps {
+> extends ComboboxVariantProps,
+		Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'prefix'> {
 	/** Option list. Supply it from anywhere — static array, TanStack Query, plain fetch. */
 	options?: ComboboxOption<T>[];
 	value?: T | T[];
@@ -52,12 +70,29 @@ export interface ComboboxProps<
 	name?: string;
 	id?: string;
 	class?: string;
+	/** Bindable reference to the root wrapper element. */
+	ref?: HTMLDivElement | null;
+	/** Bindable reference to the interactive trigger element. */
+	triggerRef?: HTMLDivElement | null;
+	/** Bindable reference to the search input element inside the dropdown. */
+	inputRef?: HTMLInputElement | null;
+	/** Bindable reference to the floating content panel element. */
+	contentRef?: HTMLDivElement | null;
 	classes?: {
 		trigger?: string;
 		content?: string;
 		input?: string;
 		option?: string;
+		createOption?: string;
 		chip?: string;
+		chipRemove?: string;
+		chipCounter?: string;
+		prefix?: string;
+		clearButton?: string;
+		indicator?: string;
+		listbox?: string;
+		groupHeader?: string;
+		empty?: string;
 	};
 	labels?: ComboboxLabels;
 	/** Skip local filtering because the data source already filtered server-side. */
@@ -67,6 +102,13 @@ export interface ComboboxProps<
 	disabled?: boolean;
 	invalid?: boolean;
 	clearable?: boolean;
+	/**
+	 * Allows users to create a new option when typing a term not present in the options list.
+	 * When chosen, `onCreate` is invoked with the typed query.
+	 */
+	creatable?: boolean;
+	/** Whether an asynchronous create operation is currently in flight. Automatically tracked if `onCreate` returns a Promise. */
+	creating?: boolean;
 	/** Chips rendered before collapsing the rest into a "+N" counter. */
 	maxChips?: number;
 	/** Leading adornment in the trigger: plain text or a snippet (icon, badge, …). */
@@ -76,6 +118,8 @@ export interface ComboboxProps<
 	portalTarget?: HTMLElement | string;
 	onSearchChange?: (query: string) => void;
 	onValueChange?: (value: T | T[] | undefined) => void;
+	/** Callback invoked when the user selects the create action. Can return a Promise to automatically enter pending state. */
+	onCreate?: (query: string) => void | Promise<void>;
 	onRetry?: () => void;
 	/**
 	 * Fired once when the listbox is scrolled near its bottom edge — wire this
@@ -87,5 +131,8 @@ export interface ComboboxProps<
 	 */
 	onEndReached?: () => void;
 	item?: Snippet<[{ option: ComboboxOption<T>; active: boolean; selected: boolean }]>;
-	empty?: Snippet;
+	createItem?: Snippet<[ComboboxCreateItemPayload]>;
+	indicator?: Snippet<[ComboboxIndicatorPayload]>;
+	empty?: Snippet<[ComboboxEmptyPayload]>;
 }
+

@@ -6,10 +6,15 @@ export type {
 	ComboboxValue,
 	ComboboxLabels,
 	ComboboxRenderGroup,
-	ComboboxRenderItem
+	ComboboxRenderItem,
+	ComboboxIndicatorPayload,
+	ComboboxEmptyPayload,
+	ComboboxCreateItemPayload
 } from './Combobox.types.js';
 export {
 	comboboxVariants,
+	comboboxSearchVariants,
+	comboboxInputVariants,
 	comboboxOptionVariants,
 	comboboxChipVariants,
 	type ComboboxVariantProps

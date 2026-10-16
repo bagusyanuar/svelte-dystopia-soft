@@ -15,7 +15,12 @@
 		value = $bindable(),
 		name,
 		class: className,
+		ref = $bindable(null),
+		triggerRef = $bindable(null),
+		contentRef = $bindable(null),
 		classes,
+		icon,
+		day,
 		locale,
 		granularity = 'day',
 		defaultMonth,
@@ -23,6 +28,7 @@
 		maxValue,
 		isDateDisabled,
 		labels,
+		clearable = false,
 		disabled = false,
 		invalid = false,
 		portalTarget,
@@ -34,12 +40,10 @@
 	const ids = createIds(baseId, 'content');
 
 	let open = $state(false);
-	let triggerEl = $state<HTMLButtonElement | null>(null);
-	let contentEl = $state<HTMLDivElement | null>(null);
 
 	const presence = createPresence(
 		() => open,
-		() => contentEl
+		() => contentRef
 	);
 
 	const resolvedLocale = $derived(
@@ -65,17 +69,31 @@
 		return current ? formatter.format(current.toDate(getLocalTimeZone())) : undefined;
 	});
 
+	const showClear = $derived(Boolean(clearable && !disabled && formattedValue));
+
 	function close(): void {
 		open = false;
 	}
 
 	function closeAndFocusTrigger(): void {
 		close();
-		triggerEl?.focus();
+		triggerRef?.focus();
 	}
 
 	function toggleOpen(): void {
 		if (!disabled) open = !open;
+	}
+
+	function handleClear(event: MouseEvent): void {
+		event.stopPropagation();
+		if (type === 'range') {
+			const next: CalendarRangeValue = { start: undefined, end: undefined };
+			value = next;
+			(onValueChange as ((value: CalendarRangeValue) => void) | undefined)?.(next);
+		} else {
+			value = undefined;
+			(onValueChange as ((value: CalendarDate | undefined) => void) | undefined)?.(undefined);
+		}
 	}
 
 	// Enter/Space need no handling here — the trigger is a real `<button>`, so
@@ -103,16 +121,16 @@
 	$effect(() => {
 		if (!open) return;
 
-		// `contentEl` is itself tracked $state, so reading it makes this effect
+		// `contentRef` is itself tracked $state, so reading it makes this effect
 		// re-run once the portalled panel actually mounts — see Combobox.svelte
 		// for the same pattern.
-		if (!contentEl) return;
+		if (!contentRef) return;
 
 		tick().then(() => {
-			contentEl?.querySelector<HTMLElement>('[role="gridcell"][tabindex="0"]')?.focus();
+			contentRef?.querySelector<HTMLElement>('[role="gridcell"][tabindex="0"]')?.focus();
 		});
 
-		return createDismissableLayer(() => [triggerEl, contentEl], {
+		return createDismissableLayer(() => [ref, contentRef], {
 			onPointerDownOutside: close,
 			onEscapeKeydown: (event) => {
 				event.preventDefault();
@@ -129,6 +147,7 @@
 		'aria-expanded': open,
 		'aria-controls': ids.content,
 		'aria-invalid': invalid || undefined,
+		'data-state': open ? 'open' : 'closed',
 		'data-invalid': invalid ? '' : undefined,
 		'data-disabled': disabled ? '' : undefined,
 		onclick: toggleOpen,
@@ -136,32 +155,82 @@
 	});
 </script>
 
-<div class={cn('inline-block', className)}>
+<div
+	bind:this={ref}
+	data-slot="date-picker"
+	data-state={open ? 'open' : 'closed'}
+	data-disabled={disabled ? '' : undefined}
+	data-invalid={invalid ? '' : undefined}
+	data-type={type}
+	data-granularity={granularity}
+	class={cn('relative inline-block', className)}
+>
 	<button
-		bind:this={triggerEl}
+		bind:this={triggerRef}
 		{...triggerProps}
+		data-slot="date-picker-trigger"
 		class={cn(
-			'flex h-10 w-full cursor-pointer items-center gap-tight rounded-md border border-border bg-surface px-3 text-left text-sm leading-snug text-foreground-soft transition-colors duration-150 hover:border-border-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[invalid]:border-danger-border data-[invalid]:focus-visible:ring-danger',
+			'flex h-10 w-full cursor-pointer items-center gap-tight rounded-md border border-border bg-surface px-3 text-left text-sm leading-snug text-foreground-soft transition-all duration-150 hover:border-border-hover focus-visible:border-primary focus-visible:outline-none focus-visible:ring-0 focus-visible:hover:border-primary dark:focus-visible:ring-[3px] dark:focus-visible:ring-primary/20 data-[state=open]:border-primary data-[state=open]:ring-0 data-[state=open]:hover:border-primary dark:data-[state=open]:ring-[3px] dark:data-[state=open]:ring-primary/20 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-invalid:border-danger data-invalid:hover:border-danger data-invalid:focus-visible:border-danger dark:data-invalid:focus-visible:ring-[3px] dark:data-invalid:focus-visible:ring-danger/25 data-invalid:data-[state=open]:border-danger dark:data-invalid:data-[state=open]:ring-[3px] dark:data-invalid:data-[state=open]:ring-danger/25',
+			showClear && 'pr-9',
 			classes?.trigger
 		)}
 	>
-		<svg
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-			class="size-4 shrink-0 text-foreground-faint"
+		{#if icon}
+			{@render icon()}
+		{:else}
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+				class={cn('size-4 shrink-0 text-foreground-faint', classes?.icon)}
+			>
+				<rect x="3" y="4" width="18" height="18" rx="2" />
+				<path d="M16 2v4M8 2v4M3 10h18" />
+			</svg>
+		{/if}
+		<span
+			data-slot="date-picker-value"
+			class={cn(
+				'flex-1 truncate',
+				!formattedValue ? 'text-foreground-faint' : 'text-foreground',
+				classes?.value
+			)}
 		>
-			<rect x="3" y="4" width="18" height="18" rx="2" />
-			<path d="M16 2v4M8 2v4M3 10h18" />
-		</svg>
-		<span class={cn('flex-1 truncate', !formattedValue && 'text-foreground-faint')}>
 			{formattedValue ?? labels?.placeholder ?? 'Select date'}
 		</span>
 	</button>
+
+	{#if showClear}
+		<button
+			type="button"
+			tabindex="-1"
+			data-slot="date-picker-clear"
+			aria-label={labels?.clear ?? 'Clear date'}
+			class={cn(
+				'absolute top-1/2 right-2.5 -translate-y-1/2 flex size-5 items-center justify-center rounded text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-muted focus-visible:outline-none',
+				classes?.clearButton
+			)}
+			onclick={handleClear}
+		>
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+				class="size-3.5"
+			>
+				<path d="M18 6 6 18" />
+				<path d="m6 6 12 12" />
+			</svg>
+		</button>
+	{/if}
 
 	{#if name}
 		{#if type === 'range'}
@@ -183,13 +252,13 @@
 
 {#if presence.current}
 	<div
-		bind:this={contentEl}
+		bind:this={contentRef}
 		id={ids.content}
 		data-slot="date-picker-content"
 		data-state={open ? 'open' : 'closed'}
 		inert={!open}
 		use:portal={{ target: portalTarget }}
-		use:floating={{ reference: triggerEl, placement: 'bottom-start', offset: 6 }}
+		use:floating={{ reference: triggerRef, placement: 'bottom-start', offset: 6 }}
 		class={cn(
 			'z-50 rounded-lg border border-border bg-surface p-compact shadow-sm',
 			classes?.content
@@ -205,6 +274,8 @@
 				{minValue}
 				{maxValue}
 				{isDateDisabled}
+				classes={classes?.calendar}
+				{day}
 				labels={{
 					previousMonth: labels?.previousMonth,
 					nextMonth: labels?.nextMonth,
@@ -224,6 +295,8 @@
 				{minValue}
 				{maxValue}
 				{isDateDisabled}
+				classes={classes?.calendar}
+				{day}
 				labels={{
 					previousMonth: labels?.previousMonth,
 					nextMonth: labels?.nextMonth,

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Label from './Label.svelte';
 import AssociationHarness from './AssociationHarness.spec.svelte';
+import LabelSemiHeadlessHarness from './LabelSemiHeadlessHarness.spec.svelte';
 
 const text = createRawSnippet(() => ({
 	render: () => `<span>Email</span>`
@@ -50,5 +51,50 @@ describe('Label.svelte', () => {
 		render(Label, { id: 'email-label', children: text });
 
 		expect(page.getByText('Email').element().closest('label')?.id).toBe('email-label');
+	});
+
+	it('exposes ref bound to the root label element', async () => {
+		render(LabelSemiHeadlessHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+	});
+
+	it('exposes data-slot hooks and data-required attribute', async () => {
+		render(LabelSemiHeadlessHarness, { required: true });
+
+		const labelEl = document.querySelector('[data-slot="label"]');
+		expect(labelEl).toBeTruthy();
+		expect(labelEl?.hasAttribute('data-required')).toBe(true);
+
+		const requiredEl = document.querySelector('[data-slot="label-required"]');
+		expect(requiredEl).toBeTruthy();
+	});
+
+	it('lets a consumer style the required marker via classes.required', async () => {
+		render(LabelSemiHeadlessHarness, {
+			required: true,
+			classes: { required: 'custom-required-color' }
+		});
+
+		const requiredEl = document.querySelector('[data-slot="label-required"]');
+		expect(requiredEl?.className).toContain('custom-required-color');
+	});
+
+	it('forwards required and disabled state to snippet payloads', async () => {
+		render(LabelSemiHeadlessHarness, { required: true, disabled: true });
+
+		const textEl = page.getByTestId('label-text');
+		await expect.element(textEl).toHaveAttribute('data-required', 'true');
+		await expect.element(textEl).toHaveAttribute('data-disabled', 'true');
+	});
+
+	it('supports a custom requiredIndicator snippet', async () => {
+		render(LabelSemiHeadlessHarness, {
+			required: true,
+			useCustomIndicator: true
+		});
+
+		await expect.element(page.getByTestId('custom-marker')).toHaveTextContent('(wajib-true)');
 	});
 });

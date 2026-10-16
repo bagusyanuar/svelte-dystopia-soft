@@ -1,8 +1,10 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { tick } from 'svelte';
 import Combobox from './Combobox.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import ComboboxSemiHeadlessHarness from './ComboboxSemiHeadlessHarness.spec.svelte';
 import { defaultFilter, splitMatch } from './combobox-state.svelte.js';
 import type { ComboboxOption } from './Combobox.types.js';
 
@@ -186,6 +188,7 @@ describe('Combobox.svelte', () => {
 			// does not play well with fake timers (see Toaster's hover test for the
 			// same reasoning applied to pointer events).
 			(page.getByRole('combobox').element() as HTMLElement).click();
+			await tick();
 			const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
 			input.value = 'an';
 			input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -253,4 +256,259 @@ describe('Combobox.svelte', () => {
 
 		await expect.element(page.getByTestId('outer-value')).toHaveTextContent('banana');
 	});
+
+	it('forwards restProps, applies root and sub-part classes, binds DOM refs, and renders custom snippets', async () => {
+		render(ComboboxSemiHeadlessHarness);
+
+		const root = page.getByTestId('combobox-root');
+		await expect.element(root).toBeInTheDocument();
+		await expect.element(root).toHaveClass('custom-root-class');
+		await expect.element(root).toHaveAttribute('data-slot', 'combobox');
+		await expect.element(root).toHaveAttribute('data-state', 'closed');
+		await expect.element(root).toHaveAttribute('data-size', 'md');
+
+		// Check ref bindings on mount
+		await expect.element(page.getByTestId('has-root-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-trigger-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-input-ref')).toHaveTextContent('no');
+		await expect.element(page.getByTestId('has-content-ref')).toHaveTextContent('no');
+
+		// Check custom indicator snippet when closed
+		const customIndicator = page.getByTestId('custom-indicator');
+		await expect.element(customIndicator).toBeInTheDocument();
+		await expect.element(customIndicator).toHaveAttribute('data-open', 'false');
+
+		// Click to open
+		await page.getByRole('combobox').click();
+
+		// Root flips state
+		await expect.element(root).toHaveAttribute('data-state', 'open');
+		await expect.element(customIndicator).toHaveAttribute('data-open', 'true');
+
+		// Floating panel and input refs are now bound
+		await expect.element(page.getByTestId('has-input-ref')).toHaveTextContent('yes');
+		await expect.element(page.getByTestId('has-content-ref')).toHaveTextContent('yes');
+
+		// Check sub-part classes
+		const listbox = page.getByRole('listbox');
+		await expect.element(listbox).toHaveClass('custom-listbox-class');
+		await expect.element(listbox).toHaveAttribute('data-slot', 'combobox-listbox');
+
+		const groupHeader = page.getByText('Fruits');
+		await expect.element(groupHeader).toHaveClass('custom-group-header');
+		await expect.element(groupHeader).toHaveAttribute('data-slot', 'combobox-group-header');
+
+		// Test empty snippet with query
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'xyz';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		const emptyEl = page.getByTestId('custom-empty');
+		await expect.element(emptyEl).toBeInTheDocument();
+		await expect.element(emptyEl).toHaveTextContent('Kosong: xyz');
+	});
+
+	it('scales popover search input, options, and container to match small size', async () => {
+		render(Combobox, { options: fruitOptions, size: 'sm' });
+
+		await page.getByRole('combobox').click();
+
+		const content = page.getByRole('listbox').element().closest('[data-slot="combobox-content"]');
+		expect(content?.getAttribute('data-size')).toBe('sm');
+
+		const input = page.getByRole('textbox', { name: 'Search…' });
+		await expect.element(input).toHaveClass('h-8');
+		await expect.element(input).toHaveClass('text-xs');
+
+		const option = page.getByRole('option', { name: 'Apple' });
+		await expect.element(option).toHaveClass('px-2');
+		await expect.element(option).toHaveClass('text-xs');
+	});
+
+	it('applies classes.chip, classes.chipRemove, and classes.chipCounter in multiple mode', async () => {
+		render(Combobox, {
+			options: fruitOptions,
+			multiple: true,
+			value: ['apple', 'banana', 'cherry'],
+			maxChips: 1,
+			classes: {
+				chip: 'custom-chip',
+				chipRemove: 'custom-chip-remove',
+				chipCounter: 'custom-chip-counter'
+			}
+		});
+
+		const chip = page.getByRole('combobox').element().querySelector('[data-slot="combobox-chip"]');
+		expect(chip?.classList.contains('custom-chip')).toBe(true);
+
+		const removeBtn = page.getByRole('combobox').element().querySelector('[data-slot="combobox-chip-remove"]');
+		expect(removeBtn?.classList.contains('custom-chip-remove')).toBe(true);
+
+		const counter = page.getByRole('combobox').element().querySelector('[data-slot="combobox-chip-counter"]');
+		expect(counter?.classList.contains('custom-chip-counter')).toBe(true);
+		expect(counter?.textContent?.trim()).toBe('+2');
+	});
+
+	it('shows create option when creatable is true and query has no match, and triggers onCreate on Enter', async () => {
+		const onCreate = vi.fn();
+		render(Combobox, {
+			options: fruitOptions,
+			creatable: true,
+			onCreate
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'Papaya';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		const createOpt = page.getByRole('option', { name: 'Create "Papaya"' });
+		await expect.element(createOpt).toBeInTheDocument();
+		expect(createOpt.element().getAttribute('data-slot')).toBe('combobox-create-option');
+
+		// Press enter to trigger creation
+		await userEvent.keyboard('{Enter}');
+		expect(onCreate).toHaveBeenCalledWith('Papaya');
+	});
+
+	it('clears search input after creating in multiple creatable mode', async () => {
+		const onCreate = vi.fn();
+		render(Combobox, {
+			options: fruitOptions,
+			multiple: true,
+			creatable: true,
+			onCreate
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'Grape';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		await userEvent.keyboard('{Enter}');
+		expect(onCreate).toHaveBeenCalledWith('Grape');
+		expect(input.value).toBe('');
+		// Menu stays open in multiple mode
+		await expect.element(page.getByRole('listbox')).toBeInTheDocument();
+	});
+
+	it('does not show create option if query exactly matches an existing option', async () => {
+		render(Combobox, {
+			options: fruitOptions,
+			creatable: true
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'apple';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		const createOpt = page.getByRole('listbox').element().querySelector('[data-slot="combobox-create-option"]');
+		expect(createOpt).toBeNull();
+	});
+
+	it('appends create option at bottom when partial matches exist and allows keyboard navigation to it', async () => {
+		const onCreate = vi.fn();
+		render(Combobox, {
+			options: fruitOptions,
+			creatable: true,
+			onCreate
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		// "an" matches Banana
+		input.value = 'an';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		// Banana is at index 0, create "an" is at index 1
+		await expect.element(page.getByRole('option', { name: 'Banana' })).toBeInTheDocument();
+		const createOpt = page.getByRole('option', { name: 'Create "an"' });
+		await expect.element(createOpt).toBeInTheDocument();
+
+		// Navigate down to create option
+		await userEvent.keyboard('{ArrowDown}');
+		expect(input.getAttribute('aria-activedescendant')).toBe(createOpt.element().id);
+
+		// Press enter on create option
+		await userEvent.keyboard('{Enter}');
+		expect(onCreate).toHaveBeenCalledWith('an');
+	});
+
+	it('supports custom create label and classes.createOption', async () => {
+		render(Combobox, {
+			options: fruitOptions,
+			creatable: true,
+			labels: {
+				create: (q) => `Tambah item: ${q}`
+			},
+			classes: {
+				createOption: 'custom-create-btn'
+			}
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'Melon';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		const createOpt = page.getByRole('option', { name: 'Tambah item: Melon' });
+		await expect.element(createOpt).toBeInTheDocument();
+		expect(createOpt.element().classList.contains('custom-create-btn')).toBe(true);
+	});
+
+	it('handles async onCreate by showing creating state, disabling re-triggers, and clearing input on resolve', async () => {
+		let resolveCreate!: () => void;
+		const onCreate = vi.fn().mockImplementation(() => {
+			return new Promise<void>((resolve) => {
+				resolveCreate = resolve;
+			});
+		});
+
+		render(Combobox, {
+			options: fruitOptions,
+			multiple: true,
+			creatable: true,
+			onCreate,
+			labels: {
+				creating: (q) => `Menyimpan "${q}"…`
+			}
+		});
+
+		await page.getByRole('combobox').click();
+		const input = page.getByRole('textbox', { name: 'Search…' }).element() as HTMLInputElement;
+		input.value = 'Dragonfruit';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await tick();
+
+		// Trigger create
+		await userEvent.keyboard('{Enter}');
+		expect(onCreate).toHaveBeenCalledTimes(1);
+
+		// While in flight: shows pending text and disabled input
+		await tick();
+		await expect.element(page.getByText('Menyimpan "Dragonfruit"…')).toBeInTheDocument();
+		expect(input.disabled).toBe(true);
+
+		// Pressing Enter again while creating must NOT trigger onCreate again
+		await userEvent.keyboard('{Enter}');
+		expect(onCreate).toHaveBeenCalledTimes(1);
+
+		// Resolve async action
+		resolveCreate();
+		await tick();
+
+		// After resolution: input is enabled again and cleared
+		expect(input.disabled).toBe(false);
+		expect(input.value).toBe('');
+	});
 });
+
+
+

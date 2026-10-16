@@ -10,7 +10,11 @@
 	import type { DrawerProps } from './Drawer.types.js';
 
 	let {
+		class: className,
 		classes,
+		ref = $bindable(null),
+		triggerRef = $bindable(null),
+		contentRef = $bindable(null),
 		open = $bindable(false),
 		side = 'right',
 		portalTarget,
@@ -18,6 +22,7 @@
 		trigger,
 		title,
 		description,
+		close: closeSnippet,
 		children,
 		...restProps
 	}: DrawerProps = $props();
@@ -25,12 +30,14 @@
 	const baseId = $props.id();
 	const ids = createIds(baseId, 'title', 'description', 'content');
 
-	let triggerEl = $state<HTMLButtonElement | null>(null);
-	let contentEl = $state<HTMLDivElement | null>(null);
 	const presence = createPresence(
 		() => open,
-		() => contentEl
+		() => contentRef
 	);
+
+	$effect(() => {
+		triggerRef = ref;
+	});
 
 	// Captured with `$effect.pre` — which runs before the DOM patch that mounts
 	// the content — so this reads whatever had focus right before opening,
@@ -49,7 +56,7 @@
 		if (!open) return;
 
 		const unlockScroll = lockScroll();
-		const destroyLayer = createDismissableLayer(() => [triggerEl, contentEl], {
+		const destroyLayer = createDismissableLayer(() => [ref ?? triggerRef, contentRef], {
 			onPointerDownOutside: close,
 			onEscapeKeydown: (event) => {
 				event.preventDefault();
@@ -70,27 +77,30 @@
 		'aria-haspopup': 'dialog' as const,
 		'aria-expanded': open,
 		'aria-controls': ids.content,
+		'data-slot': 'drawer-trigger',
 		'data-state': open ? 'open' : 'closed',
+		'data-disabled': restProps.disabled ? '' : undefined,
 		class: cn(
 			'inline-flex h-10 cursor-pointer items-center justify-center gap-tight rounded-md border border-border px-control-x text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			className,
 			classes?.trigger
 		),
 		onclick: () => (open = !open)
 	});
 </script>
 
-<button bind:this={triggerEl} {...triggerProps}>
-	{@render trigger()}
+<button bind:this={ref} {...triggerProps}>
+	{@render trigger({ open })}
 </button>
 
 {#if presence.current}
 	<!-- Reuses Dialog's overlay animation — same visual role (dimming scrim), no need for a second copy. -->
 	<div
 		aria-hidden="true"
-		data-slot="dialog-overlay"
+		data-slot="drawer-overlay"
 		data-state={open ? 'open' : 'closed'}
 		use:portal={{ target: portalTarget }}
-		class={cn('fixed inset-0 z-50 bg-foreground/40', classes?.overlay)}
+		class={cn('fixed inset-0 z-50 bg-overlay backdrop-blur-xs', classes?.overlay)}
 	></div>
 	<!--
 	  No centring wrapper needed here unlike Dialog — the content is positioned
@@ -98,7 +108,7 @@
 	  can sit directly on this element without the wrapper trick Dialog needs.
 	-->
 	<div
-		bind:this={contentEl}
+		bind:this={contentRef}
 		id={ids.content}
 		role="dialog"
 		data-slot="drawer-content"
@@ -115,43 +125,52 @@
 	>
 		<h2
 			id={ids.title}
+			data-slot="drawer-title"
 			class={cn('pr-8 text-lg leading-tight font-medium text-foreground', classes?.title)}
 		>
-			{@render title()}
+			{@render title({ open })}
 		</h2>
 		{#if description}
 			<p
 				id={ids.description}
+				data-slot="drawer-description"
 				class={cn('mt-1 text-sm leading-snug text-foreground-subtle', classes?.description)}
 			>
-				{@render description()}
+				{@render description({ open })}
 			</p>
 		{/if}
-		<div class="mt-4 min-h-0 flex-1">
-			{@render children()}
-		</div>
-		<button
-			type="button"
-			onclick={close}
-			aria-label={labels?.close ?? 'Close'}
-			class={cn(
-				'absolute top-4 right-4 inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-				classes?.close
-			)}
-		>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-				class="size-4"
+		{#if children}
+			<div data-slot="drawer-body" class={cn('mt-4 min-h-0 flex-1', classes?.body)}>
+				{@render children({ open, close })}
+			</div>
+		{/if}
+		{#if closeSnippet}
+			{@render closeSnippet({ close })}
+		{:else}
+			<button
+				type="button"
+				onclick={close}
+				data-slot="drawer-close"
+				aria-label={labels?.close ?? 'Close'}
+				class={cn(
+					'absolute top-4 right-4 inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-foreground-faint transition-colors duration-150 hover:bg-surface-subtle hover:text-foreground-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+					classes?.close
+				)}
 			>
-				<path d="M18 6 6 18" />
-				<path d="m6 6 12 12" />
-			</svg>
-		</button>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					class={cn('size-4', classes?.closeIcon)}
+				>
+					<path d="M18 6 6 18" />
+					<path d="m6 6 12 12" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 {/if}

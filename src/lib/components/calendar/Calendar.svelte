@@ -25,14 +25,19 @@
 		type = 'single',
 		value = $bindable(),
 		class: className,
+		ref = $bindable(null),
+		gridRef = $bindable(null),
 		classes,
-		locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US',
+		locale = 'en-US',
 		granularity = 'day',
 		defaultMonth,
 		minValue,
 		maxValue,
 		isDateDisabled,
 		labels,
+		previousIcon,
+		nextIcon,
+		headingSnippet,
 		day,
 		onValueChange,
 		...restProps
@@ -53,7 +58,6 @@
 	}
 
 	let focusedDate = $state<CalendarDate>(initialFocusDate());
-	let gridEl = $state<HTMLDivElement | null>(null);
 
 	const weeks = $derived(getCalendarGrid({ date: focusedDate, locale }));
 	const monthGrid = $derived(getMonthGrid(focusedDate));
@@ -166,7 +170,7 @@
 
 	async function focusCell(date: CalendarDate): Promise<void> {
 		await tick();
-		gridEl?.querySelector<HTMLElement>(`[data-date="${date.toString()}"]`)?.focus();
+		gridRef?.querySelector<HTMLElement>(`[data-date="${date.toString()}"]`)?.focus();
 	}
 
 	/** Columns in the year grid — a 4x3 layout of `YEAR_GRID_PAGE_SIZE` (12) years. */
@@ -302,10 +306,21 @@
 	}
 </script>
 
-<div class={cn('w-fit', className)} {...restProps}>
-	<div class={cn('flex items-center justify-between gap-cozy pb-compact', classes?.header)}>
+<div
+	bind:this={ref}
+	data-slot="calendar"
+	data-type={type}
+	data-granularity={granularity}
+	class={cn('w-fit', className)}
+	{...restProps}
+>
+	<div
+		data-slot="calendar-header"
+		class={cn('flex items-center justify-between gap-cozy pb-compact', classes?.header)}
+	>
 		<button
 			type="button"
+			data-slot="calendar-prev-button"
 			aria-label={granularity === 'year'
 				? (labels?.previousYears ?? `Previous ${YEAR_GRID_PAGE_SIZE} years`)
 				: granularity === 'month'
@@ -321,28 +336,38 @@
 				classes?.previousButton
 			)}
 		>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-				class="size-4"
-			>
-				<path d="m15 18-6-6 6-6" />
-			</svg>
+			{#if previousIcon}
+				{@render previousIcon()}
+			{:else}
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					class="size-4"
+				>
+					<path d="m15 18-6-6 6-6" />
+				</svg>
+			{/if}
 		</button>
-		<span
-			id={ids.heading}
-			aria-live="polite"
-			class={cn('text-sm leading-snug font-medium text-foreground', classes?.heading)}
-		>
-			{heading}
-		</span>
+		{#if headingSnippet}
+			{@render headingSnippet({ heading, focusedDate, granularity })}
+		{:else}
+			<span
+				id={ids.heading}
+				data-slot="calendar-heading"
+				aria-live="polite"
+				class={cn('text-sm leading-snug font-medium text-foreground', classes?.heading)}
+			>
+				{heading}
+			</span>
+		{/if}
 		<button
 			type="button"
+			data-slot="calendar-next-button"
 			aria-label={granularity === 'year'
 				? (labels?.nextYears ?? `Next ${YEAR_GRID_PAGE_SIZE} years`)
 				: granularity === 'month'
@@ -358,32 +383,41 @@
 				classes?.nextButton
 			)}
 		>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-				class="size-4"
-			>
-				<path d="m9 18 6-6-6-6" />
-			</svg>
+			{#if nextIcon}
+				{@render nextIcon()}
+			{:else}
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					class="size-4"
+				>
+					<path d="m9 18 6-6-6-6" />
+				</svg>
+			{/if}
 		</button>
 	</div>
 
 	<div
-		bind:this={gridEl}
+		bind:this={gridRef}
 		role="grid"
 		tabindex="-1"
+		data-slot="calendar-grid"
 		aria-labelledby={ids.heading}
 		onkeydown={handleGridKeydown}
-		class="flex flex-col gap-1 outline-none"
+		class={cn('flex flex-col gap-1 outline-none', classes?.grid)}
 	>
 		{#if granularity === 'year'}
 			{#each [0, 1, 2] as row (row)}
-				<div role="row" class="grid grid-cols-4 justify-items-center">
+				<div
+					role="row"
+					data-slot="calendar-row"
+					class={cn('grid grid-cols-4 justify-items-center', classes?.row)}
+				>
 					{#each yearGrid.slice(row * YEAR_GRID_COLUMNS, row * YEAR_GRID_COLUMNS + YEAR_GRID_COLUMNS) as cell (cell.year)}
 						{@const selected = isSelected(cell.date)}
 						{@const isCellCurrentYear = cell.year === today(getLocalTimeZone()).year}
@@ -407,7 +441,11 @@
 			{/each}
 		{:else if granularity === 'month'}
 			{#each [0, 1, 2] as row (row)}
-				<div role="row" class="grid grid-cols-4 justify-items-center">
+				<div
+					role="row"
+					data-slot="calendar-row"
+					class={cn('grid grid-cols-4 justify-items-center', classes?.row)}
+				>
 					{#each monthGrid.slice(row * MONTH_GRID_COLUMNS, row * MONTH_GRID_COLUMNS + MONTH_GRID_COLUMNS) as cell (cell.month)}
 						{@const selected = isSelected(cell.date)}
 						{@const isCellCurrentMonth = sameUnit(cell.date, today(getLocalTimeZone()))}
@@ -430,12 +468,20 @@
 				</div>
 			{/each}
 		{:else}
-			<div role="row" class={cn('grid grid-cols-7 justify-items-center', classes?.weekdays)}>
+			<div
+				role="row"
+				data-slot="calendar-weekdays"
+				class={cn('grid grid-cols-7 justify-items-center', classes?.weekdays, classes?.row)}
+			>
 				{#each weeks[0] as cell (cell.date.toString())}
 					<span
 						role="columnheader"
+						data-slot="calendar-weekday"
 						aria-label={weekdayLongFormatter.format(cell.date.toDate(getLocalTimeZone()))}
-						class="flex size-8 items-center justify-center text-xs font-medium text-foreground-subtle"
+						class={cn(
+							'flex size-8 items-center justify-center text-xs font-medium text-foreground-subtle',
+							classes?.weekday
+						)}
 					>
 						{weekdayFormatter.format(cell.date.toDate(getLocalTimeZone()))}
 					</span>
@@ -443,7 +489,11 @@
 			</div>
 
 			{#each weeks as week (week[0].date.toString())}
-				<div role="row" class="grid grid-cols-7 justify-items-center">
+				<div
+					role="row"
+					data-slot="calendar-row"
+					class={cn('grid grid-cols-7 justify-items-center', classes?.row)}
+				>
 					{#each week as cell (cell.date.toString())}
 						{@const selected = isSelected(cell.date)}
 						{@const isCellToday = isToday(cell.date, getLocalTimeZone())}

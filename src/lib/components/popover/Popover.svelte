@@ -7,13 +7,18 @@
 	import type { PopoverProps } from './Popover.types.js';
 
 	let {
+		class: className,
 		classes,
+		ref = $bindable(null),
+		triggerRef = $bindable(null),
+		contentRef = $bindable(null),
 		open = $bindable(false),
 		placement = 'bottom-start',
 		offset = 8,
 		portalTarget,
 		trigger,
 		children,
+		onOpenChange,
 		...restProps
 	}: PopoverProps = $props();
 
@@ -21,13 +26,33 @@
 
 	let triggerEl = $state<HTMLButtonElement | null>(null);
 	let contentEl = $state<HTMLDivElement | null>(null);
+
+	$effect(() => {
+		ref = triggerEl ?? ref;
+		triggerRef = triggerEl ?? triggerRef;
+	});
+
+	$effect(() => {
+		contentRef = contentEl ?? contentRef;
+	});
+
 	const presence = createPresence(
 		() => open,
 		() => contentEl
 	);
 
-	function close() {
-		open = false;
+	function setOpen(next: boolean): void {
+		if (open === next) return;
+		open = next;
+		onOpenChange?.(next);
+	}
+
+	function close(): void {
+		setOpen(false);
+	}
+
+	function toggle(): void {
+		setOpen(!open);
 	}
 
 	$effect(() => {
@@ -52,16 +77,18 @@
 		'aria-expanded': open,
 		'aria-controls': contentId,
 		'data-state': open ? 'open' : 'closed',
+		'data-slot': 'popover-trigger',
 		class: cn(
 			'inline-flex h-10 cursor-pointer items-center justify-center gap-tight rounded-md border border-border px-control-x text-sm leading-snug font-medium text-foreground-soft transition-colors duration-150 hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+			className,
 			classes?.trigger
 		),
-		onclick: () => (open = !open)
+		onclick: toggle
 	});
 </script>
 
 <button bind:this={triggerEl} {...triggerProps}>
-	{@render trigger()}
+	{@render trigger({ open, close })}
 </button>
 
 {#if presence.current}
@@ -70,7 +97,9 @@
 		id={contentId}
 		role="dialog"
 		tabindex="-1"
+		data-slot="popover-content"
 		data-state={open ? 'open' : 'closed'}
+		data-placement={placement}
 		inert={!open}
 		use:portal={{ target: portalTarget }}
 		use:floating={{ reference: triggerEl, placement, offset }}
@@ -79,6 +108,6 @@
 			classes?.content
 		)}
 	>
-		{@render children()}
+		{@render children({ open, close })}
 	</div>
 {/if}

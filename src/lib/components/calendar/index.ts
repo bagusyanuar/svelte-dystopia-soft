@@ -1,9 +1,11 @@
 export { default as Calendar } from './Calendar.svelte';
 export type {
 	CalendarProps,
+	CalendarClasses,
 	CalendarRangeValue,
 	CalendarLabels,
-	CalendarDaySnippetProps
+	CalendarDaySnippetProps,
+	CalendarHeadingSnippetProps
 } from './Calendar.types.js';
 
 export { default as CalendarDay } from './CalendarDay.svelte';

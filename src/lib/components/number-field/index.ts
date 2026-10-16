@@ -1,2 +1,2 @@
 export { default as NumberField } from './NumberField.svelte';
-export type { NumberFieldProps } from './NumberField.types.js';
+export type { NumberFieldClasses, NumberFieldProps } from './NumberField.types.js';

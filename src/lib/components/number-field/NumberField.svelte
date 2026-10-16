@@ -7,9 +7,12 @@
 	let {
 		value = $bindable(),
 		ref = $bindable(null),
+		inputRef = $bindable(null),
 		hideSpinner = true,
 		thousandSeparator = false,
 		classes,
+		prefix,
+		suffix,
 		onValueChange,
 		...restProps
 	}: NumberFieldProps = $props();
@@ -61,6 +64,10 @@
 	let lastCommitted = value;
 
 	$effect(() => {
+		inputRef = ref ?? inputRef;
+	});
+
+	$effect(() => {
 		if (value === lastCommitted) return;
 		lastCommitted = value;
 		displayValue = toDisplay(value);
@@ -108,6 +115,14 @@
 	}
 </script>
 
+{#snippet renderPrefix()}
+	{@render prefix?.({ value, displayValue })}
+{/snippet}
+
+{#snippet renderSuffix()}
+	{@render suffix?.({ value, displayValue })}
+{/snippet}
+
 <TextField
 	{...restProps}
 	bind:ref
@@ -115,6 +130,11 @@
 	inputmode={thousandSeparator ? 'decimal' : undefined}
 	bind:value={displayValue}
 	oninput={handleInput}
+	prefix={prefix ? renderPrefix : undefined}
+	suffix={suffix ? renderSuffix : undefined}
+	data-slot="number-field"
+	data-thousand-separator={thousandSeparator ? '' : undefined}
+	data-has-value={value !== undefined ? '' : undefined}
 	classes={{
 		...classes,
 		input: cn(

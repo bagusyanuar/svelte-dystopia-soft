@@ -1,8 +1,9 @@
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import PasswordField from './PasswordField.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import PasswordFieldSemiHeadlessHarness from './PasswordFieldSemiHeadlessHarness.spec.svelte';
 
 describe('PasswordField.svelte', () => {
 	it('masks the value by default', async () => {
@@ -81,5 +82,72 @@ describe('PasswordField.svelte', () => {
 		await page.getByRole('button', { name: 'Show password' }).click();
 
 		await expect.element(page.getByTestId('outer-visible')).toHaveTextContent('true');
+	});
+
+	it('exposes ref, inputRef, containerRef, and toggleRef', async () => {
+		render(PasswordFieldSemiHeadlessHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+		await expect.element(status).toHaveAttribute('data-has-input', 'true');
+		await expect.element(status).toHaveAttribute('data-has-container', 'true');
+		await expect.element(status).toHaveAttribute('data-has-toggle', 'true');
+	});
+
+	it('exposes data-slot and data-visible attributes', async () => {
+		render(PasswordField, {
+			visible: true,
+			placeholder: 'Password'
+		});
+
+		const input = document.querySelector('[data-slot="password-field"]');
+		expect(input).toBeTruthy();
+		expect(input?.hasAttribute('data-visible')).toBe(true);
+	});
+
+	it('applies custom sub-part classes via classes.toggle and classes.icon', async () => {
+		render(PasswordField, {
+			placeholder: 'Password',
+			classes: {
+				toggle: 'custom-toggle-btn',
+				icon: 'custom-toggle-icon'
+			}
+		});
+
+		const button = page.getByRole('button', { name: 'Show password' }).element();
+		expect(button.className).toContain('custom-toggle-btn');
+		const icon = button.querySelector('svg');
+		expect(icon?.getAttribute('class')).toContain('custom-toggle-icon');
+	});
+
+	it('renders custom icon snippet when provided', async () => {
+		render(PasswordFieldSemiHeadlessHarness);
+
+		const icon = page.getByTestId('custom-icon');
+		await expect.element(icon).toHaveTextContent('EYE-CLOSED');
+
+		await page.getByRole('button', { name: 'Show password' }).click();
+		await expect.element(icon).toHaveTextContent('EYE-OPEN');
+	});
+
+	it('forwards visible state to prefix snippet', async () => {
+		render(PasswordFieldSemiHeadlessHarness);
+
+		const prefix = page.getByTestId('test-prefix');
+		await expect.element(prefix).toHaveTextContent('LOCKED');
+
+		await page.getByRole('button', { name: 'Show password' }).click();
+		await expect.element(prefix).toHaveTextContent('UNLOCKED');
+	});
+
+	it('calls onVisibleChange callback on toggle', async () => {
+		const onVisibleChange = vi.fn();
+		render(PasswordFieldSemiHeadlessHarness, { onVisibleChange });
+
+		await page.getByRole('button', { name: 'Show password' }).click();
+		expect(onVisibleChange).toHaveBeenCalledWith(true);
+
+		await page.getByRole('button', { name: 'Hide password' }).click();
+		expect(onVisibleChange).toHaveBeenCalledWith(false);
 	});
 });

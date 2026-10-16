@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
 import HelperText from './HelperText.svelte';
 import AssociationHarness from './AssociationHarness.spec.svelte';
+import HelperTextSemiHeadlessHarness from './HelperTextSemiHeadlessHarness.spec.svelte';
 
 const text = createRawSnippet(() => ({
 	render: () => `<span>Must be at least 8 characters.</span>`
@@ -52,5 +53,40 @@ describe('HelperText.svelte', () => {
 		await expect
 			.element(page.getByPlaceholder('you@company.com'))
 			.toHaveAccessibleDescription('Enter a valid email address.');
+	});
+
+	it('exposes ref bound to the root paragraph element', async () => {
+		render(HelperTextSemiHeadlessHarness);
+
+		const status = page.getByTestId('ref-status');
+		await expect.element(status).toHaveAttribute('data-has-root', 'true');
+	});
+
+	it('exposes data-slot hooks on root and icon', async () => {
+		render(HelperTextSemiHeadlessHarness);
+
+		const root = document.querySelector('[data-slot="helper-text"]');
+		expect(root?.getAttribute('data-slot')).toBe('helper-text');
+		expect(root?.querySelector('[data-slot="helper-text-icon"]')).toBeTruthy();
+	});
+
+	it('lets a consumer style the icon container via classes.icon', async () => {
+		render(HelperTextSemiHeadlessHarness, {
+			classes: { icon: 'custom-icon-class' }
+		});
+
+		const iconEl = document.querySelector('[data-slot="helper-text-icon"]');
+		expect(iconEl?.className).toContain('custom-icon-class');
+	});
+
+	it('forwards the invalid state payload to icon and children snippets', async () => {
+		render(HelperTextSemiHeadlessHarness, { invalid: true });
+
+		const icon = page.getByTestId('test-icon');
+		const content = page.getByTestId('test-text');
+
+		await expect.element(icon).toHaveAttribute('data-invalid-payload', 'true');
+		await expect.element(content).toHaveAttribute('data-invalid-payload', 'true');
+		await expect.element(content).toHaveTextContent('Pesan kesalahan.');
 	});
 });

@@ -1,2 +1,2 @@
 export { default as HelperText } from './HelperText.svelte';
-export type { HelperTextProps } from './HelperText.types.js';
+export type { HelperTextProps, HelperTextClasses } from './HelperText.types.js';

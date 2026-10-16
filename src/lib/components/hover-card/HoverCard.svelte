@@ -6,7 +6,11 @@
 	import type { HoverCardProps } from './HoverCard.types.js';
 
 	let {
+		class: className,
 		classes,
+		ref = $bindable(null),
+		triggerRef = $bindable(null),
+		contentRef = $bindable(null),
 		open = $bindable(false),
 		placement = 'bottom',
 		offset = 8,
@@ -26,11 +30,9 @@
 	// reason. Unlike those, this component deliberately never steals focus
 	// into the card programmatically (hovering shouldn't move keyboard
 	// focus), so reaching it by keyboard means tabbing from the trigger.
-	let triggerEl = $state<HTMLSpanElement | null>(null);
-	let contentEl = $state<HTMLDivElement | null>(null);
 	const presence = createPresence(
 		() => open,
-		() => contentEl
+		() => contentRef
 	);
 
 	let openTimer: ReturnType<typeof setTimeout> | undefined;
@@ -62,19 +64,25 @@
 		open = false;
 	}
 
+	$effect(() => {
+		triggerRef = ref;
+	});
+
 	// Keeps the card open while focus moves between the trigger and the card
 	// (Tab forward into it, Shift+Tab back) — unlike Tooltip, this content is
 	// meant to be interactive, so losing focus to it must not count as
 	// leaving.
 	function handleFocusOut(event: FocusEvent) {
 		const next = event.relatedTarget as Node | null;
-		if (next && (triggerEl?.contains(next) || contentEl?.contains(next))) return;
+		const activeTrigger = ref ?? triggerRef;
+		if (next && (activeTrigger?.contains(next) || contentRef?.contains(next))) return;
 		scheduleClose();
 	}
 
 	function handlePointerDown(event: PointerEvent) {
 		const target = event.target as Node;
-		if (triggerEl?.contains(target) || contentEl?.contains(target)) return;
+		const activeTrigger = ref ?? triggerRef;
+		if (activeTrigger?.contains(target) || contentRef?.contains(target)) return;
 		close();
 	}
 
@@ -82,7 +90,7 @@
 		if (event.key !== 'Escape') return;
 		event.preventDefault();
 		close();
-		triggerEl?.focus();
+		(ref ?? triggerRef)?.focus();
 	}
 
 	$effect(() => {
@@ -99,8 +107,9 @@
 
 	const triggerProps = $derived({
 		...restProps,
+		'data-slot': 'hover-card-trigger',
 		'data-state': open ? 'open' : 'closed',
-		class: cn('inline-flex', classes?.trigger),
+		class: cn('inline-flex', className, classes?.trigger),
 		onmouseenter: scheduleOpen,
 		onmouseleave: scheduleClose,
 		onfocusin: openNow,
@@ -108,8 +117,8 @@
 	});
 </script>
 
-<span bind:this={triggerEl} {...triggerProps}>
-	{@render children()}
+<span bind:this={ref} {...triggerProps}>
+	{@render children({ open, close })}
 </span>
 
 {#if presence.current}
@@ -120,19 +129,20 @@
 	-->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		bind:this={contentEl}
+		bind:this={contentRef}
 		id={contentId}
+		data-slot="hover-card-content"
 		data-state={open ? 'open' : 'closed'}
 		onmouseenter={() => clearTimeout(closeTimer)}
 		onmouseleave={scheduleClose}
 		onfocusout={handleFocusOut}
 		use:portal={{ target: portalTarget }}
-		use:floating={{ reference: triggerEl, placement, offset }}
+		use:floating={{ reference: ref ?? triggerRef, placement, offset }}
 		class={cn(
 			'z-50 rounded-lg border border-border bg-surface p-4 text-sm text-foreground-muted shadow-sm',
 			classes?.content
 		)}
 	>
-		{@render content()}
+		{@render content({ open, close })}
 	</div>
 {/if}

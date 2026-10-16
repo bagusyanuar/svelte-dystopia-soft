@@ -104,6 +104,10 @@
 </script>
 
 <script lang="ts">
+	import { Avatar } from '../avatar/index.js';
+	import { Badge } from '../badge/index.js';
+	import { cn } from '../../utils/cn.js';
+
 	const allFruits: ComboboxOption[] = [
 		{ value: 'apple', label: 'Apple' },
 		{ value: 'apricot', label: 'Apricot' },
@@ -111,6 +115,78 @@
 		{ value: 'blueberry', label: 'Blueberry' },
 		{ value: 'cherry', label: 'Cherry' },
 		{ value: 'clementine', label: 'Clementine' }
+	];
+
+	interface MemberOption extends ComboboxOption<string> {
+		email: string;
+		role: 'Owner' | 'Admin' | 'Member' | 'Guest';
+		roleVariant: 'default' | 'secondary' | 'outline' | 'info';
+		status: 'active' | 'busy' | 'away';
+		statusColor: string;
+		avatarText: string;
+	}
+
+	const teamMembers: MemberOption[] = [
+		{
+			value: 'bagus',
+			label: 'Bagus Yanuar',
+			email: 'bagus@dystopia.dev',
+			role: 'Owner',
+			roleVariant: 'default',
+			status: 'active',
+			statusColor: 'bg-success',
+			avatarText: 'BY',
+			group: 'Core Engineering',
+			keywords: ['bagus', 'dystopia', 'owner', 'lead']
+		},
+		{
+			value: 'alexa',
+			label: 'Alexa Vance',
+			email: 'alexa.vance@blackmesa.org',
+			role: 'Admin',
+			roleVariant: 'info',
+			status: 'busy',
+			statusColor: 'bg-warning',
+			avatarText: 'AV',
+			group: 'Core Engineering',
+			keywords: ['alexa', 'vance', 'admin']
+		},
+		{
+			value: 'gordon',
+			label: 'Gordon Freeman',
+			email: 'gordon.f@blackmesa.org',
+			role: 'Member',
+			roleVariant: 'secondary',
+			status: 'active',
+			statusColor: 'bg-success',
+			avatarText: 'GF',
+			group: 'Research & Design',
+			keywords: ['gordon', 'freeman', 'research']
+		},
+		{
+			value: 'elena',
+			label: 'Elena Rostova',
+			email: 'elena@novaprospekt.ru',
+			role: 'Member',
+			roleVariant: 'secondary',
+			status: 'away',
+			statusColor: 'bg-foreground-faint',
+			avatarText: 'ER',
+			group: 'Research & Design',
+			keywords: ['elena', 'rostova', 'design']
+		},
+		{
+			value: 'marcus',
+			label: 'Marcus Holloway',
+			email: 'marcus@dedsec.io',
+			role: 'Guest',
+			roleVariant: 'outline',
+			status: 'active',
+			statusColor: 'bg-success',
+			avatarText: 'MH',
+			group: 'External Contractors',
+			keywords: ['marcus', 'guest', 'contractor']
+		}
 	];
 
 	let asyncOptions = $state<ComboboxOption[]>([]);
@@ -134,6 +210,63 @@
 			asyncOptions = allFruits.filter((option) => option.label.toLowerCase().includes(needle));
 			asyncLoading = false;
 		}, 600);
+	}
+
+	let creatableTags = $state<ComboboxOption[]>([
+		{ value: 'svelte', label: 'Svelte' },
+		{ value: 'tailwind', label: 'Tailwind' },
+		{ value: 'typescript', label: 'TypeScript' }
+	]);
+	let selectedTags = $state<string[]>(['svelte']);
+
+	function handleCreateTag(newLabel: string) {
+		const newTag: ComboboxOption = {
+			value: newLabel.toLowerCase().replace(/\s+/g, '-'),
+			label: newLabel
+		};
+		creatableTags = [...creatableTags, newTag];
+		selectedTags = [...selectedTags, String(newTag.value)];
+	}
+
+	let remoteTagsPool: ComboboxOption[] = [
+		{ value: 'svelte', label: 'Svelte' },
+		{ value: 'tailwind', label: 'Tailwind' },
+		{ value: 'typescript', label: 'TypeScript' },
+		{ value: 'vitest', label: 'Vitest' },
+		{ value: 'vite', label: 'Vite' }
+	];
+
+	let asyncCreatableOptions = $state<ComboboxOption[]>([...remoteTagsPool]);
+	let selectedAsyncTags = $state<string[]>(['svelte']);
+	let asyncCreatableLoading = $state(false);
+	let asyncCreatableTimer: ReturnType<typeof setTimeout>;
+
+	function fakeAsyncTagSearch(query: string) {
+		clearTimeout(asyncCreatableTimer);
+		asyncCreatableLoading = true;
+		asyncCreatableTimer = setTimeout(() => {
+			const needle = query.trim().toLowerCase();
+			if (!needle) {
+				asyncCreatableOptions = [...remoteTagsPool];
+			} else {
+				asyncCreatableOptions = remoteTagsPool.filter((tag) =>
+					tag.label.toLowerCase().includes(needle)
+				);
+			}
+			asyncCreatableLoading = false;
+		}, 400);
+	}
+
+	async function handleAsyncCreateTag(newLabel: string) {
+		// Simulates network POST request to /api/tags (750ms)
+		await new Promise((resolve) => setTimeout(resolve, 750));
+		const newTag: ComboboxOption = {
+			value: newLabel.toLowerCase().replace(/\s+/g, '-'),
+			label: newLabel
+		};
+		remoteTagsPool = [...remoteTagsPool, newTag];
+		asyncCreatableOptions = [...remoteTagsPool];
+		selectedAsyncTags = [...selectedAsyncTags, String(newTag.value)];
 	}
 </script>
 
@@ -243,3 +376,148 @@
 		<Combobox options={fruitOptions} size="lg" labels={{ placeholder: 'Large' }} />
 	</div>
 </Story>
+
+<Story name="Custom indicator & styling" asChild>
+	<div class="flex w-80 justify-center p-16">
+		<Combobox
+			options={groupedOptions}
+			labels={{ placeholder: 'Pilih buah…' }}
+			classes={{
+				trigger: 'border-primary/40 hover:border-primary',
+				indicator: 'text-primary'
+			}}
+		>
+			{#snippet indicator({ open })}
+				<span class="text-xs font-bold text-primary transition-transform duration-200 {open ? 'rotate-180' : ''}">
+					▼
+				</span>
+			{/snippet}
+		</Combobox>
+	</div>
+</Story>
+
+<Story name="Complex custom item" asChild>
+	<div class="flex w-105 max-w-full justify-center p-16">
+		<Combobox
+			options={teamMembers}
+			labels={{
+				placeholder: 'Pilih anggota tim…',
+				searchPlaceholder: 'Cari nama, email, atau role…'
+			}}
+		>
+			{#snippet item({ option, selected })}
+				{@const member = option as unknown as MemberOption}
+				<div class="flex w-full items-center justify-between gap-tight py-1">
+					<div class="flex items-center gap-tight min-w-0">
+						<div class="relative shrink-0">
+							<Avatar alt={member.label} class="size-8 text-xs font-semibold">
+								{member.avatarText}
+							</Avatar>
+							<span
+								class={cn(
+									'absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-surface',
+									member.statusColor
+								)}
+								title={`Status: ${member.status}`}
+							></span>
+						</div>
+
+						<div class="flex flex-col min-w-0 text-left">
+							<span class="truncate font-medium {selected ? 'text-primary' : 'text-foreground'}">
+								{member.label}
+							</span>
+							<span class="truncate text-[11px] text-foreground-faint">
+								{member.email}
+							</span>
+						</div>
+					</div>
+
+					<div class="flex items-center gap-2 shrink-0">
+						<Badge size="sm" variant={member.roleVariant}>
+							{member.role}
+						</Badge>
+						{#if selected}
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+								class="size-4 shrink-0 text-primary"
+							>
+								<path d="M20 6 9 17l-5-5" />
+							</svg>
+						{/if}
+					</div>
+				</div>
+			{/snippet}
+		</Combobox>
+	</div>
+</Story>
+
+<Story name="Custom chips styling" asChild>
+	<div class="flex w-96 justify-center p-16">
+		<Combobox
+			options={fruitOptions}
+			multiple
+			value={['apple', 'banana', 'cherry', 'elderberry']}
+			maxChips={2}
+			labels={{ placeholder: 'Pilih buah…' }}
+			classes={{
+				chip: 'rounded-full border-primary/30 bg-primary/10 font-medium text-primary',
+				chipRemove: 'text-primary hover:bg-primary/20',
+				chipCounter: 'rounded-full bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary'
+			}}
+		/>
+	</div>
+</Story>
+
+<Story name="Creatable tags (multiple)" asChild>
+	<div class="flex w-96 flex-col gap-cozy p-16">
+		<Combobox
+			options={creatableTags}
+			multiple
+			creatable
+			bind:value={selectedTags}
+			onCreate={handleCreateTag}
+			labels={{
+				placeholder: 'Pilih atau ketik tag baru…',
+				searchPlaceholder: 'Cari atau buat tag…',
+				create: (q) => `Buat tag baru "${q}"`
+			}}
+		/>
+		<p class="text-xs text-foreground-faint">
+			Ketik nama tag baru (misal: "React" atau "Vite") lalu tekan <kbd class="rounded border border-border-subtle bg-surface-subtle px-1 py-0.5 text-[10px] font-medium text-foreground">Enter</kbd> untuk menambahkan tag baru secara dinamis.
+		</p>
+	</div>
+</Story>
+
+<Story name="Async creatable tags" asChild>
+	<div class="flex w-96 flex-col gap-cozy p-16">
+		<Combobox
+			options={asyncCreatableOptions}
+			multiple
+			creatable
+			loading={asyncCreatableLoading}
+			manualFilter
+			bind:value={selectedAsyncTags}
+			onCreate={handleAsyncCreateTag}
+			onSearchChange={fakeAsyncTagSearch}
+			labels={{
+				placeholder: 'Search or create tags (async)…',
+				searchPlaceholder: 'Search or type new tag…',
+				create: (q) => `Create "${q}" on server`,
+				creating: (q) => `Creating "${q}" on server…`,
+				empty: 'No tags found.'
+			}}
+		/>
+		<p class="text-xs text-foreground-faint">
+			Demonstrates remote search (400ms debounce) with asynchronous server creation (750ms latency). The item row shows an active spinner while the API call is in progress.
+		</p>
+	</div>
+</Story>
+
+
+
