@@ -9,7 +9,10 @@ export const typographyVariants = cva('', {
 			h4: 'text-base leading-tight font-medium text-foreground',
 			body: 'text-sm text-foreground-muted',
 			small: 'text-xs leading-snug text-foreground-muted',
-			muted: 'text-sm text-foreground-subtle'
+			muted: 'text-sm text-foreground-subtle',
+			lead: 'text-base leading-relaxed text-foreground-soft font-normal',
+			code: 'relative rounded px-1.5 py-0.5 font-mono text-xs font-medium bg-surface-subtle border border-border text-foreground',
+			blockquote: 'border-l-2 border-border pl-4 italic text-foreground-muted'
 		}
 	},
 	defaultVariants: {

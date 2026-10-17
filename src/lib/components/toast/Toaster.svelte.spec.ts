@@ -3,7 +3,9 @@ import { page } from 'vitest/browser';
 import { describe, expect, it, afterEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Toaster from './Toaster.svelte';
+import ToasterHarness from './ToasterHarness.spec.svelte';
 import { toast, toastStore } from './toast-store.svelte.js';
+
 
 afterEach(() => {
 	toastStore.dismissAll();
@@ -249,4 +251,73 @@ describe('Toaster.svelte', () => {
 		const iconEl = document.querySelector('[data-slot="toast-icon"]')!;
 		expect(iconEl.className).toContain('custom-icon-class');
 	});
+
+	it('exposes data-slot="toaster" and data-position on viewport element', async () => {
+		render(Toaster, { position: 'top-center' });
+
+		const viewport = document.querySelector('[role="region"]');
+		expect(viewport?.getAttribute('data-slot')).toBe('toaster');
+		expect(viewport?.getAttribute('data-position')).toBe('top-center');
+	});
+
+	it('binds element ref and forwards unrecognized attributes on the viewport', async () => {
+		render(ToasterHarness);
+
+		await expect.element(page.getByTestId('has-toaster-ref')).toHaveTextContent('true');
+		await expect.element(page.getByTestId('custom-toaster-root')).toBeInTheDocument();
+	});
+
+	it('exposes data-variant and structured data-slots on toast item elements', async () => {
+		render(Toaster);
+		toast.danger('Failed transaction', { description: 'Insufficient balance' });
+
+		await expect.element(page.getByRole('alert')).toBeInTheDocument();
+		const item = document.querySelector('[data-slot="toast"]')!;
+		expect(item.getAttribute('data-variant')).toBe('danger');
+
+		expect(document.querySelector('[data-slot="toast-content"]')).not.toBeNull();
+		expect(document.querySelector('[data-slot="toast-title"]')).toHaveTextContent('Failed transaction');
+		expect(document.querySelector('[data-slot="toast-description"]')).toHaveTextContent('Insufficient balance');
+		expect(document.querySelector('[data-slot="toast-close"]')).not.toBeNull();
+	});
+
+	it('renders an interactive action button and triggers onClick when clicked', async () => {
+		render(Toaster);
+		const onClick = vi.fn();
+		toast.message('File deleted', {
+			action: { label: 'Undo', onClick }
+		});
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		const actionBtn = page.getByRole('button', { name: 'Undo' });
+		await expect.element(actionBtn).toBeInTheDocument();
+		expect(actionBtn.element().getAttribute('data-slot')).toBe('toast-action');
+
+		await actionBtn.click();
+		expect(onClick).toHaveBeenCalledTimes(1);
+	});
+
+	it('invokes onDismiss callback when toast is closed', async () => {
+		render(Toaster);
+		const onDismiss = vi.fn();
+		const id = toast.message('Dismissible', { duration: 0, onDismiss });
+
+		await expect.element(page.getByRole('status')).toBeInTheDocument();
+		await page.getByRole('button', { name: 'Close' }).click();
+
+		await expect.element(page.getByRole('status')).not.toBeInTheDocument();
+		expect(onDismiss).toHaveBeenCalledWith(id);
+	});
+
+	it('supports custom item snippet rendering via item prop', async () => {
+		render(ToasterHarness, { useCustomItem: true });
+		toast.message('Custom Layout');
+
+		await expect.element(page.getByTestId('custom-toast-item')).toBeInTheDocument();
+		await expect.element(page.getByText('Custom: Custom Layout')).toBeInTheDocument();
+
+		await page.getByTestId('custom-dismiss-btn').click();
+		await expect.element(page.getByTestId('custom-toast-item')).not.toBeInTheDocument();
+	});
 });
+

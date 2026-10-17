@@ -1,10 +1,16 @@
 import { getContext, setContext } from 'svelte';
 
-interface TabsContext {
+export type TabsOrientation = 'horizontal' | 'vertical';
+export type TabsVariant = 'pill' | 'underline';
+
+export interface TabsContext {
 	baseId: string;
+	getOrientation: () => TabsOrientation;
+	getVariant: () => TabsVariant;
 	getValue: () => string;
 	setValue: (value: string) => void;
 }
+
 
 const TABS_CONTEXT_KEY = Symbol('tabs');
 
@@ -19,3 +25,4 @@ export function getTabsContext(): TabsContext {
 	}
 	return context;
 }
+

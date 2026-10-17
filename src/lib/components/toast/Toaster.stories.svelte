@@ -153,3 +153,56 @@
 		<Toaster position="top-left" />
 	</div>
 </Story>
+
+<Story name="With Action" asChild>
+	<div class="flex h-64 w-96 items-center justify-center">
+		<button
+			type="button"
+			class={triggerClass}
+			onclick={() =>
+				toast.success('Conversation archived', {
+					description: 'Moved to archived conversations list.',
+					action: {
+						label: 'Undo',
+						onClick: () => toast.info('Archiving undone')
+					}
+				})}
+		>
+			Toast with action
+		</button>
+		<Toaster />
+	</div>
+</Story>
+
+<Story name="Custom Item Snippet" asChild>
+	<div class="flex h-64 w-96 items-center justify-center">
+		<button
+			type="button"
+			class={triggerClass}
+			onclick={() =>
+				toast.message('Build succeeded', {
+					description: 'Artifact deployed to production.'
+				})}
+		>
+			Custom styled toast
+		</button>
+		<Toaster>
+			{#snippet item({ toast: t, dismiss })}
+				<div class="flex items-center justify-between gap-3 rounded-full border border-primary/20 bg-surface px-4 py-2 shadow-lg backdrop-blur-md">
+					<div class="flex items-center gap-2">
+						<span class="size-2 rounded-full bg-success"></span>
+						<span class="text-xs font-semibold text-foreground">{t.title}</span>
+					</div>
+					<button
+						type="button"
+						class="text-xs text-foreground-faint hover:text-foreground cursor-pointer"
+						onclick={() => dismiss(t.id)}
+					>
+						✕
+					</button>
+				</div>
+			{/snippet}
+		</Toaster>
+	</div>
+</Story>
+

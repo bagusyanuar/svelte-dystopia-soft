@@ -1,9 +1,10 @@
 import { createRawSnippet } from 'svelte';
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Tooltip from './Tooltip.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import TooltipSemiHeadlessHarness from './TooltipSemiHeadlessHarness.spec.svelte';
 
 const content = createRawSnippet(() => ({
 	render: () => `<span>Saves your changes</span>`
@@ -179,5 +180,117 @@ describe('Tooltip.svelte', () => {
 		const tooltipEl = page.getByRole('tooltip').element();
 		expect(tooltipEl.className).toContain('rounded-lg');
 		expect(tooltipEl.className).not.toContain('rounded-md');
+	});
+
+	it('exposes data-slot, data-state, and data-placement on trigger and content', async () => {
+		render(Tooltip, {
+			content,
+			delayDuration: 0,
+			placement: 'bottom',
+			children: createRawSnippet(() => ({ render: () => `<button>Save</button>` }))
+		});
+
+		const button = trigger().element();
+		const wrapper = button.parentElement!;
+		expect(wrapper.getAttribute('data-slot')).toBe('tooltip-trigger');
+		expect(wrapper.getAttribute('data-state')).toBe('closed');
+		expect(wrapper.getAttribute('data-placement')).toBe('bottom');
+
+		await trigger().hover();
+		expect(wrapper.getAttribute('data-state')).toBe('open');
+
+		const tooltipEl = page.getByRole('tooltip').element();
+		expect(tooltipEl.getAttribute('data-slot')).toBe('tooltip-content');
+		expect(tooltipEl.getAttribute('data-state')).toBe('open');
+		expect(tooltipEl.getAttribute('data-placement')).toBe('bottom');
+	});
+
+	it('renders as div when as="div" is specified', async () => {
+		render(TooltipSemiHeadlessHarness, { testAsDiv: true });
+
+		const button = page.getByRole('button', { name: 'Div Trigger' }).element();
+		expect(button.parentElement?.tagName).toBe('DIV');
+	});
+
+	it('binds triggerRef, contentRef, and arrowRef', async () => {
+		render(TooltipSemiHeadlessHarness, { testRefs: true });
+
+		await expect.element(page.getByTestId('trigger-ref-status')).toHaveTextContent('bound');
+
+		await page.getByRole('button', { name: 'Trigger Ref Button' }).hover();
+
+		await expect.element(page.getByTestId('content-ref-status')).toHaveTextContent('bound');
+		await expect.element(page.getByTestId('arrow-ref-status')).toHaveTextContent('bound');
+	});
+
+	it('does not show tooltip and exposes data-disabled when disabled is true', async () => {
+		const onOpenChange = vi.fn();
+		render(TooltipSemiHeadlessHarness, { testDisabled: true, onOpenChange });
+
+		const button = page.getByRole('button', { name: 'Disabled Trigger' });
+		const wrapper = button.element().parentElement!;
+		expect(wrapper.hasAttribute('data-disabled')).toBe(true);
+
+		await button.hover();
+		await expect.element(page.getByRole('tooltip')).not.toBeInTheDocument();
+		expect(onOpenChange).not.toHaveBeenCalled();
+	});
+
+	it('supports defaultOpen for uncontrolled initialization and triggers onOpenChange', async () => {
+		const onOpenChange = vi.fn();
+		render(TooltipSemiHeadlessHarness, { testDefaultOpen: true, onOpenChange });
+
+		await expect.element(page.getByRole('tooltip')).toBeInTheDocument();
+		await expect.element(page.getByRole('tooltip')).toHaveTextContent('Default Open Content');
+	});
+
+	it('supports plain string content', async () => {
+		render(TooltipSemiHeadlessHarness, { testStringContent: true });
+
+		await page.getByRole('button', { name: 'String Trigger' }).hover();
+
+		await expect.element(page.getByRole('tooltip')).toHaveTextContent('Plain string content');
+	});
+
+	it('provides open and close payload to children and content snippets', async () => {
+		render(TooltipSemiHeadlessHarness, { testSnippetPayload: true });
+
+		const closedTrigger = page.getByRole('button', { name: 'Trigger State: Closed' });
+		await expect.element(closedTrigger).toBeInTheDocument();
+
+		await closedTrigger.hover();
+		const openTrigger = page.getByRole('button', { name: 'Trigger State: Open' });
+		await expect.element(openTrigger).toBeInTheDocument();
+
+		await expect.element(page.getByTestId('content-payload')).toHaveTextContent('Payload Open: true');
+
+		// Clicking the trigger invokes close() from snippet payload
+		await openTrigger.click();
+
+		await expect.element(page.getByRole('tooltip')).not.toBeInTheDocument();
+	});
+
+	it('merges root class and classes.trigger onto the trigger element', async () => {
+		render(Tooltip, {
+			content,
+			class: 'custom-root',
+			classes: { trigger: 'custom-trigger' },
+			children: createRawSnippet(() => ({ render: () => `<button>Save</button>` }))
+		});
+
+		const wrapper = trigger().element().parentElement!;
+		expect(wrapper.className).toContain('custom-root');
+		expect(wrapper.className).toContain('custom-trigger');
+		expect(wrapper.className).toContain('inline-flex');
+	});
+
+	it('forwards contentProps to floating content element', async () => {
+		render(TooltipSemiHeadlessHarness, { testContentProps: true });
+
+		await page.getByRole('button', { name: 'Content Props Trigger' }).hover();
+
+		const contentEl = page.getByTestId('custom-tooltip-content');
+		await expect.element(contentEl).toBeInTheDocument();
+		await expect.element(contentEl).toHaveAttribute('aria-label', 'Custom Floating');
 	});
 });

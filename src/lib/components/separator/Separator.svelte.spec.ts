@@ -2,6 +2,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Separator from './Separator.svelte';
+import SeparatorHarness from './SeparatorHarness.spec.svelte';
 
 describe('Separator.svelte', () => {
 	it('has no separator role by default (decorative)', async () => {
@@ -45,5 +46,31 @@ describe('Separator.svelte', () => {
 		render(Separator, { 'data-testid': 'sep', id: 'probe-id' });
 
 		await expect.element(page.getByTestId('sep')).toHaveAttribute('id', 'probe-id');
+	});
+
+	// --- Semi-headless capability tests ---
+
+	it('exposes data-slot and default data-orientation attributes', async () => {
+		render(Separator, { 'data-testid': 'sep' });
+
+		const el = page.getByTestId('sep').element();
+		expect(el.getAttribute('data-slot')).toBe('separator');
+		expect(el.getAttribute('data-orientation')).toBe('horizontal');
+		expect(el.hasAttribute('data-decorative')).toBe(true);
+	});
+
+	it('exposes vertical data-orientation and removes data-decorative when decorative is false', async () => {
+		render(Separator, { 'data-testid': 'sep', orientation: 'vertical', decorative: false });
+
+		const el = page.getByTestId('sep').element();
+		expect(el.getAttribute('data-slot')).toBe('separator');
+		expect(el.getAttribute('data-orientation')).toBe('vertical');
+		expect(el.hasAttribute('data-decorative')).toBe(false);
+	});
+
+	it('binds ref to the root element via harness', async () => {
+		render(SeparatorHarness);
+
+		await expect.element(page.getByTestId('has-ref')).toHaveTextContent('yes');
 	});
 });

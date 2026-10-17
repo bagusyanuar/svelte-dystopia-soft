@@ -1,2 +1,3 @@
 export { default as Tooltip } from './Tooltip.svelte';
-export type { TooltipProps } from './Tooltip.types.js';
+export type { TooltipProps, TooltipClasses, TooltipSnippetProps } from './Tooltip.types.js';
+

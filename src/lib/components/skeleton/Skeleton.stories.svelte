@@ -5,10 +5,27 @@
 	import CardHeader from '../card/CardHeader.svelte';
 	import CardContent from '../card/CardContent.svelte';
 
+	const componentDescription = [
+		'Komponen penampung loading placeholder (Skeleton) dengan estetika **SaaS Compact Minimalist** (terinspirasi dari Linear).',
+		'',
+		'### Fitur Utama & Prinsip Semi-Headless',
+		'- **Aksesibilitas Bawaan**: Otomatis menyertakan `aria-hidden="true"` agar pembaca layar tidak mengumumkan konten palsu/kosong selama pemuatan.',
+		'- **Animasi & Bentuk Fleksibel**: Membawa animasi `animate-pulse` dan radius default yang dapat dioverride sepenuhnya menggunakan utilitas Tailwind (`rounded-full`, warna background kustom, dsb.).',
+		'- **DOM Element Reference**: Mendukung `bind:ref` ke elemen root `<div>`.',
+		'- **State Hooks via Data-Attributes**: Mengekspos hook `data-slot="skeleton"`.'
+	].join('\n');
+
 	const { Story } = defineMeta({
 		title: 'Components/Skeleton',
 		component: Skeleton,
-		tags: ['autodocs']
+		tags: ['autodocs'],
+		parameters: {
+			docs: {
+				description: {
+					component: componentDescription
+				}
+			}
+		}
 	});
 </script>
 

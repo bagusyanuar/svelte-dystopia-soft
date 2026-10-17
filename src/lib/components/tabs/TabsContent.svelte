@@ -4,21 +4,40 @@
 	import { getTabsContext } from './tabs-context.js';
 	import type { TabsContentProps } from './TabsContent.types.js';
 
-	let { value, class: className, children, ...restProps }: TabsContentProps = $props();
+	let {
+		value,
+		class: className,
+		forceMount = false,
+		ref = $bindable(null),
+		children,
+		...restProps
+	}: TabsContentProps = $props();
 
 	const context = getTabsContext();
 	const selected = $derived(context.getValue() === value);
+	const orientation = $derived(context.getOrientation());
 </script>
 
-{#if selected}
+{#if selected || forceMount}
 	<div
+		bind:this={ref}
 		id={idFor(context.baseId, 'panel', value)}
 		role="tabpanel"
 		aria-labelledby={idFor(context.baseId, 'tab', value)}
 		tabindex="0"
-		class={cn('text-sm text-foreground-muted focus-visible:outline-none', className)}
+		hidden={!selected}
+		data-slot="tabs-content"
+		data-state={selected ? 'active' : 'inactive'}
+		data-value={value}
+		data-orientation={orientation}
+		class={cn(
+			'text-sm text-foreground-muted focus-visible:outline-none',
+			!selected && forceMount && 'hidden',
+			className
+		)}
 		{...restProps}
 	>
-		{@render children()}
+		{@render children({ active: selected })}
 	</div>
 {/if}
+

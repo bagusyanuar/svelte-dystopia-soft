@@ -143,3 +143,41 @@
 		</Tooltip>
 	</div>
 </Story>
+
+<Story name="String Content" asChild>
+	<div class="flex w-80 justify-center p-16">
+		<Tooltip content="Simple string tooltip without snippet boilerplate" delayDuration={100}>
+			<button
+				type="button"
+				class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-border px-3 text-xs font-medium text-foreground-soft hover:bg-surface-subtle"
+			>
+				Hover for string tip
+			</button>
+		</Tooltip>
+	</div>
+</Story>
+
+<Story name="Block Trigger as Div" asChild>
+	<div class="flex w-80 flex-col gap-3 p-16">
+		<Tooltip as="div" class="w-full" content="Full-width block card tooltip" delayDuration={100}>
+			<div class="w-full cursor-pointer rounded-lg border border-border bg-surface p-4 shadow-xs transition-colors hover:bg-surface-subtle">
+				<h4 class="text-xs font-semibold text-foreground">Project Settings</h4>
+				<p class="text-xs text-foreground-muted">Manage security and environment tokens.</p>
+			</div>
+		</Tooltip>
+	</div>
+</Story>
+
+<Story name="Disabled" asChild>
+	<div class="flex w-80 justify-center p-16">
+		<Tooltip disabled content="This tooltip will not show because disabled is true">
+			<button
+				type="button"
+				disabled
+				class="inline-flex h-9 cursor-not-allowed items-center justify-center rounded-md border border-border px-3 text-xs font-medium text-foreground-muted opacity-50"
+			>
+				Disabled Tooltip
+			</button>
+		</Tooltip>
+	</div>
+</Story>

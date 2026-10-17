@@ -1,6 +1,7 @@
 <script module lang="ts">
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import Toggle from './Toggle.svelte';
+	import ToggleInteractiveDemo from './ToggleInteractiveDemo.svelte';
 	import type { ToggleProps } from './Toggle.types.js';
 
 	type ToggleStoryArgs = Pick<ToggleProps, 'variant' | 'size' | 'pressed' | 'disabled'>;
@@ -11,7 +12,7 @@
 		tags: ['autodocs'],
 		argTypes: {
 			variant: { control: 'select', options: ['default', 'outline'] },
-			size: { control: 'select', options: ['sm', 'md', 'lg'] },
+			size: { control: 'select', options: ['xs', 'sm', 'md', 'lg'] },
 			pressed: { control: 'boolean' },
 			disabled: { control: 'boolean' }
 		}
@@ -49,8 +50,13 @@
 	{/snippet}
 </Story>
 
+<Story name="Interactive Demo" asChild>
+	<ToggleInteractiveDemo />
+</Story>
+
 <Story name="Sizes" asChild>
 	<div class="flex items-center gap-3">
+		<Toggle size="xs" pressed>Extra Small</Toggle>
 		<Toggle size="sm" pressed>Small</Toggle>
 		<Toggle size="md" pressed>Medium</Toggle>
 		<Toggle size="lg" pressed>Large</Toggle>
@@ -82,3 +88,20 @@
 		<Toggle variant="outline">Underline</Toggle>
 	</div>
 </Story>
+
+<Story name="Child Snippet Pattern" asChild>
+	<div class="flex items-center gap-3">
+		<Toggle defaultPressed>
+			{#snippet child({ props, pressed })}
+				<button
+					{...props}
+					class="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface-subtle data-[state=on]:border-primary data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+				>
+					<span class="size-1.5 rounded-full {pressed ? 'bg-primary' : 'bg-foreground-faint'}"></span>
+					<span>Custom Filter Pill ({pressed ? 'Active' : 'Inactive'})</span>
+				</button>
+			{/snippet}
+		</Toggle>
+	</div>
+</Story>
+

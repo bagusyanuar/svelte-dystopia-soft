@@ -1,8 +1,9 @@
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Slider from './Slider.svelte';
 import BindingHarness from './BindingHarness.spec.svelte';
+import SliderHarness from './SliderHarness.spec.svelte';
 
 describe('Slider.svelte', () => {
 	it('renders a slider with the given bounds', async () => {
@@ -86,5 +87,64 @@ describe('Slider.svelte', () => {
 		render(Slider, { 'aria-label': 'Volume', name: 'volume' });
 
 		await expect.element(page.getByRole('slider')).toHaveAttribute('name', 'volume');
+	});
+
+	// --- Semi-headless capability tests ---
+
+	it('exposes data-slot="slider" and data-orientation="horizontal"', async () => {
+		render(Slider, { 'aria-label': 'Volume' });
+
+		const el = page.getByRole('slider').element();
+		expect(el.getAttribute('data-slot')).toBe('slider');
+		expect(el.getAttribute('data-orientation')).toBe('horizontal');
+	});
+
+	it('exposes data-disabled when disabled is true', async () => {
+		render(Slider, { 'aria-label': 'Volume', disabled: true });
+
+		const el = page.getByRole('slider').element();
+		expect(el.hasAttribute('data-disabled')).toBe(true);
+	});
+
+	it('merges custom inline styles with --slider-fill without overwriting it', async () => {
+		render(Slider, {
+			'aria-label': 'Volume',
+			value: 50,
+			min: 0,
+			max: 100,
+			style: 'opacity: 0.8;'
+		});
+
+		const el = page.getByRole('slider').element() as HTMLElement;
+		expect(el.style.getPropertyValue('--slider-fill')).toBe('50%');
+		expect(el.style.opacity).toBe('0.8');
+	});
+
+	it('binds ref to the native input element via harness', async () => {
+		render(SliderHarness);
+
+		await expect.element(page.getByTestId('has-ref')).toHaveTextContent('yes');
+	});
+
+	it('calls onValueChange callback when value changes', async () => {
+		const onValueChange = vi.fn();
+		render(SliderHarness, { value: 30, onValueChange });
+
+		const slider = page.getByRole('slider');
+		slider.element().focus();
+		await userEvent.keyboard('{ArrowRight}');
+
+		expect(onValueChange).toHaveBeenCalledWith(31);
+	});
+
+	it('calls onSlide callback when value changes', async () => {
+		const onSlide = vi.fn();
+		render(SliderHarness, { value: 50, onSlide });
+
+		const slider = page.getByRole('slider');
+		slider.element().focus();
+		await userEvent.keyboard('{ArrowRight}');
+
+		expect(onSlide).toHaveBeenCalledWith(51);
 	});
 });

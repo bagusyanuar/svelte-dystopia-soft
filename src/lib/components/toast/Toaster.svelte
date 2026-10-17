@@ -11,7 +11,10 @@
 		portalTarget,
 		class: className,
 		classes,
-		labels
+		labels,
+		ref = $bindable(null),
+		item: itemSnippet,
+		...restProps
 	}: ToasterProps = $props();
 
 	const positionClasses: Record<ToastPosition, string> = {
@@ -35,17 +38,26 @@
 </script>
 
 <div
+	bind:this={ref}
 	use:portal={{ target: portalTarget }}
 	role="region"
 	aria-label={labels?.region ?? 'Notifications'}
+	data-slot="toaster"
+	data-position={position}
 	class={cn(
 		'pointer-events-none fixed z-50 flex w-full max-w-sm flex-col gap-cozy p-4',
 		positionClasses[position],
-		className,
-		classes?.viewport
+		classes?.viewport,
+		className
 	)}
+	{...restProps}
 >
 	{#each visible as item (item.id)}
-		<ToastItem toast={item} onDismiss={toastStore.dismiss} {classes} {labels} />
+		{#if itemSnippet}
+			{@render itemSnippet({ toast: item, dismiss: toastStore.dismiss })}
+		{:else}
+			<ToastItem toast={item} onDismiss={toastStore.dismiss} {classes} {labels} />
+		{/if}
 	{/each}
 </div>
+
